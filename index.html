@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>專題報告引導器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+/* 版面：頂列＋兩欄（章節導覽｜主內容），窄螢幕堆疊 */
+:root{
+  --bg:#F1F4F3; --surface:#FFFFFF; --ink:#1A2320; --muted:#5B6863; --line:#D6DEDB;
+  --accent:#0D6B5F; --accent-ink:#FFFFFF; --accent-soft:#DDEFEA;
+  --warn:#A65A14; --warn-soft:#FBEBD6; --bad:#B3261E; --bad-soft:#FBE3E1; --code:#EDF1EF;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-head:"Noto Serif TC","Songti TC","PMingLiU",serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111715; --surface:#19211E; --ink:#E3EBE7; --muted:#97A59F; --line:#2B3632;
+  --accent:#4DBFAC; --accent-ink:#0B1412; --accent-soft:#17332D;
+  --warn:#E3A15A; --warn-soft:#382715; --bad:#F2867C; --bad-soft:#3A1C1A; --code:#0D1210; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{font-family:var(--f-head);margin:0;line-height:1.3}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-direction:column;min-width:0;flex:1 1 260px}
+.brand h1{font-size:19px}
+.brand span{font-size:13px;color:var(--muted)}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.save{font-size:12px;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.btn.warn{color:var(--warn);border-color:var(--warn)}
+.btn.sm{padding:3px 9px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.banner{background:var(--warn-soft);font-size:14px;padding:10px max(16px,env(safe-area-inset-left,0px));display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.banner b{color:var(--warn)}
+
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:22px;padding:20px max(16px,env(safe-area-inset-left,0px));align-items:start;max-width:1180px;margin:0 auto}
+.nav{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px}
+.nav button{display:grid;grid-template-columns:2em 1fr auto;align-items:center;gap:6px;text-align:left;border:1px solid transparent;background:none;border-radius:6px;padding:7px 10px;cursor:pointer}
+.nav button:hover{background:var(--surface)}
+.nav button[aria-current="true"]{background:var(--surface);border-color:var(--line)}
+.nav .no{font-family:var(--f-head);font-weight:700;color:var(--accent)}
+.nav .nm{font-size:14px;min-width:0}
+.nav .st{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.nav .st.ok{color:var(--accent);font-weight:700}
+.nav hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+
+.main{min-width:0;display:flex;flex-direction:column;gap:18px}
+.ch-head{display:flex;flex-direction:column;gap:6px}
+.ch-head .eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.ch-head h2{font-size:28px}
+.ch-head p{margin:0;color:var(--muted);max-width:66ch}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.pill.b{background:var(--bad-soft);color:var(--bad)}
+
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-size:12.5px}
+.strip div{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--muted);line-height:1.4}
+.strip div b{display:block;color:var(--ink);font-size:13px}
+.strip div.done{border-color:var(--accent);background:var(--accent-soft)}
+.strip div.done b{color:var(--accent)}
+.next{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:12px 14px}
+.next div{flex:1 1 300px;min-width:0}
+.next b{color:var(--accent);font-size:15.5px}
+.next p{margin:2px 0 0;font-size:13.5px}
+
+.group{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:18px}
+.group h3{font-size:18px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.group h3 small{font-family:var(--f-body);font-size:12.5px;font-weight:400;color:var(--muted)}
+.mine{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.lab{font-weight:700;font-size:14.5px}
+.req{color:var(--warn);font-weight:400;font-size:12px;margin-left:6px}
+.opt{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+.hint{font-size:13px;color:var(--muted);margin:0;max-width:72ch}
+.field input,.field select,.field textarea,.card input,.card select,.card textarea{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px 10px;line-height:1.6}
+.field textarea{resize:vertical;min-height:64px}
+details.ex{font-size:13px;border:1px dashed var(--line);border-radius:6px;padding:4px 10px}
+details.ex summary{cursor:pointer;color:var(--accent);font-weight:500}
+.ex .g,.ex .x{margin:6px 0;padding:6px 8px;border-radius:4px;white-space:pre-wrap}
+.ex .g{background:var(--accent-soft)} .ex .x{background:var(--bad-soft)}
+.ex .g b{color:var(--accent)} .ex .x b{color:var(--bad)}
+.echo{background:var(--accent-soft);border-radius:6px;padding:10px 12px;font-size:13.5px;white-space:pre-wrap}
+.echo b{color:var(--accent)}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--bg);text-align:left;font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--muted)}
+td{border-bottom:1px solid var(--line);padding:2px;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td textarea,td select{width:100%;min-width:110px;border:0;background:transparent;padding:6px;resize:vertical;min-height:38px;line-height:1.5}
+td.tags{min-width:150px;padding:6px;font-size:12.5px}
+td.tags label{display:inline-flex;gap:3px;align-items:center;margin:0 8px 2px 0;white-space:nowrap;font-weight:400}
+td.no{padding:8px;white-space:nowrap;font-weight:500;color:var(--accent)}
+td.del{width:34px;text-align:center}
+td.del button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:6px}
+td.del button:hover{color:var(--bad)}
+
+.picker{border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.picker summary{cursor:pointer;padding:8px 10px;font-weight:500;color:var(--accent);font-size:13.5px}
+.picker ul{list-style:none;margin:0;padding:0 10px 10px;display:flex;flex-direction:column;gap:6px}
+.picker li{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:8px 10px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+.picker li div{flex:1;min-width:0}
+.picker li .ct{color:var(--muted);font-size:12px;word-break:break-all}
+
+.stepcard{border:2px solid var(--accent);background:var(--surface);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.stepcard h3{font-size:19px}
+.step{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px}
+.step>.n{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;display:flex;align-items:center;justify-content:center}
+.step.done>.n{background:var(--accent);color:var(--accent-ink)}
+.step>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.step h4{font-family:var(--f-body);font-size:15px}
+.step textarea{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px 10px;resize:vertical}
+.pre{margin:0;background:var(--code);border-radius:6px;padding:12px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+.ro{font-size:12px;font-weight:700;color:var(--muted)}
+.lock{background:var(--warn-soft);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.lock b{color:var(--warn)}
+.lock ul{margin:4px 0 0;padding-left:20px}
+.ups{display:flex;flex-direction:column;gap:8px}
+.up{border:1px solid var(--warn);background:var(--warn-soft);border-radius:6px;padding:8px 10px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.up .hd{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.up .hd b{color:var(--warn)}
+.up .tx{white-space:pre-wrap;background:var(--surface);border-radius:4px;padding:6px 8px}
+.up.applied{border-color:var(--accent);background:var(--accent-soft);opacity:.75}
+.up.applied .hd b{color:var(--accent)}
+.up.skipped{opacity:.5;border-style:dashed;background:transparent}
+.notice{border:2px solid var(--warn);background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.notice b{color:var(--warn)}
+.chk{border-radius:8px;padding:12px 14px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.chk.block{border:2px solid var(--bad);background:var(--bad-soft)}
+.chk.block>b{color:var(--bad)}
+.chk.warn{border:2px solid var(--warn);background:var(--warn-soft)}
+.chk.warn>b{color:var(--warn)}
+.chk ul{margin:0;padding-left:20px}
+.toast{font-size:12.5px;color:var(--accent);font-weight:500}
+.links a{font-size:13px;color:var(--accent);margin-right:10px}
+
+.card{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 10px;font-size:13.5px}
+.card label{display:flex;flex-direction:column;gap:3px;font-weight:500;font-size:12.5px;color:var(--muted)}
+.card .full{grid-column:1/-1}
+.card .cite{grid-column:1/-1;background:var(--surface);border-radius:4px;padding:6px 8px;font-size:13px}
+.card .cite b{color:var(--accent)}
+.stat{display:flex;flex-wrap:wrap;gap:8px}
+
+.paper{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:40px clamp(18px,5vw,64px);font-family:"Noto Serif TC","PMingLiU",serif;line-height:1.9}
+.paper h2{font-size:22px;text-align:center;margin:28px 0 14px}
+.paper h3{font-size:17px;margin:18px 0 6px}
+.paper p{margin:0 0 10px;text-indent:2em;white-space:pre-wrap}
+.paper .cover{text-align:center;padding:40px 0 60px;border-bottom:1px dashed #bbb}
+.paper .cover .big{font-size:26px;letter-spacing:.3em;margin:18px 0}
+.paper .ph{color:#999;font-style:italic;text-indent:0}
+.paper .fig{background:#FFF4D6;padding:0 4px;border-radius:3px}
+.paper .todo{background:#FCE1DE;padding:0 4px;border-radius:3px}
+.paper .tag{font-family:var(--f-body);font-size:12px;color:#A65A14;margin-left:8px}
+.paper ul{padding-left:20px}
+.paper .ref{text-indent:-2em;padding-left:2em}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .box{background:var(--surface);border-radius:10px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.modal textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px;font-size:12.5px}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{from{box-shadow:0 0 0 5px var(--accent-soft)}to{box-shadow:0 0 0 0 transparent}}
+
+@media (max-width:820px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .nav{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .nav button{grid-template-columns:auto auto;flex:0 0 auto;border-color:var(--line);background:var(--surface)}
+  .nav .st,.nav hr{display:none}
+  .strip{grid-template-columns:1fr 1fr}
+  .ch-head h2{font-size:23px}
+}
+.framed .noframe{display:none!important}
+@media print{
+  .top,.banner,.nav,.noprint{display:none!important}
+  .layout{display:block;padding:0}
+  .paper{border:0;padding:0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1 id="projName">專題報告引導器</h1>
+    <span>多媒體遊戲發展與應用系 畢業專題報告（系上 6 章範本）</span>
+  </div>
+  <span class="save" id="saveState">資料自動存在這台電腦的瀏覽器</span>
+  <div class="top-actions">
+    <button class="btn" id="btnData">匯出／匯入</button>
+    <button class="btn" id="btnSample">看完整範例</button>
+    <button class="btn warn" id="btnNew">開始新專題</button>
+  </div>
+</header>
+<div class="banner" id="sampleBanner" hidden>
+  <span><b>目前是範例資料：</b>梅莉物語（遊戲組，組員已匿名）。標〔待補〕的地方是刻意留下的缺口。</span>
+  <button class="btn sm" id="btnNew2">清空，開始我的專題</button>
+</div>
+
+<div class="layout">
+  <nav class="nav" id="nav" aria-label="章節"></nav>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle">匯出／匯入專題資料</h3>
+    <p class="hint">資料只存在這台電腦的瀏覽器。換電腦、備份或交給老師檢閱時，用 JSON 搬移。<b>建議每次寫完都匯出一次備份。</b></p>
+    <label class="field"><span class="lab">目前資料（JSON）</span><textarea id="exportBox" readonly></textarea></label>
+    <div class="top-actions">
+      <button class="btn pri" id="btnCopyJson">複製 JSON</button>
+      <button class="btn" id="btnDlJson">下載 .json 檔</button>
+      <span class="toast" id="jsonToast"></span>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <label class="field"><span class="lab">匯入：選擇 .json 檔或貼上 JSON</span>
+      <input type="file" id="importFile" accept=".json,application/json">
+      <textarea id="importBox" placeholder="把先前匯出的 JSON 貼在這裡"></textarea></label>
+    <div class="top-actions">
+      <button class="btn pri" id="btnImport">匯入並取代目前資料</button>
+      <button class="btn" id="btnClose">關閉</button>
+      <span class="toast" id="importMsg"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== 1. 組別、子類型與老師入門資料 ===================== */
+const GROUPS = {
+  '遊戲組':['2D 遊戲','3D 遊戲'],
+  '多媒體組':['微電影','短影音','紀錄片','2D 動畫','3D 動畫'],
+  '網紅直播組':['網紅直播','電競直播'],
+  '主視覺組':['主視覺／品牌識別'],
+  '其他組':['手繪插畫','AI 插畫']
+};
+// 子類型 → 領域：決定欄位名稱、說明與勾選項目
+const DOMAIN = {'2D 遊戲':'game','3D 遊戲':'game','微電影':'film','短影音':'film','紀錄片':'film','2D 動畫':'anim','3D 動畫':'anim','網紅直播':'live','電競直播':'live','主視覺／品牌識別':'art','手繪插畫':'art','AI 插畫':'art'};
+// 老師入門資料（已排除待老師確認的條目），依子類型分組
+const TEACHER_REFS = {"2D 遊戲": [{"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2026年5月）、《2024年臺灣文化內容產業調查報告 第四冊：遊戲產業類》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1187，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1187", "note": "2024 年台灣遊戲產業總營收約 648.91 億元；當年上架 Steam 的 77 款台灣遊戲裡，有 64.94% 掛「獨立遊戲」標籤。可以拿來說明小團隊、獨立 2D 作品在台灣很常見", "author": "文化內容策進院", "year": "2026", "no": 1}, {"cat": "動機佐證", "lv": "A", "cite": "王雅萱（2025年12月12日）、《2025日本東京電玩展參展出國報告》、臺北市、數位發展部數位產業署，https://report.ndc.gov.tw/ReportFront/PageSystem/reportFileDownload/C11401294/001，檢索日期 2026-11-18", "url": "https://report.ndc.gov.tw/ReportFront/PageSystem/reportFileDownload/C11401294/001", "note": "政府帶台灣獨立遊戲團隊去東京電玩展的報告，記錄參展成果（例如願望清單平均成長約 15%），也提到國際廠商覺得台灣團隊開發能力強。可以佐證政府在扶植獨立遊戲", "author": "王雅萱", "year": "2025", "no": 2}, {"cat": "動機佐證", "lv": "B", "cite": "周文凱（2024年7月6日）、【娛樂透視】赤燭5,000萬做《九日》 跳脫舒適圈攻掠全球市場、臺北市、鏡週刊，https://www.mirrormedia.mg/story/20240628insight001，檢索日期 2026-11-18", "url": "https://www.mirrormedia.mg/story/20240628insight001", "note": "台灣團隊赤燭花大約 5,000 萬元做 2D 動作遊戲《九日》，在海外賣得不錯。可以當作「台灣 2D 遊戲能打國際市場」的實例", "author": "周文凱", "year": "2024", "no": 3}, {"cat": "製作方法", "lv": "B", "cite": "Unity Technologies（未標示日期）、Get started with 2D game development（Unity 6.6 手冊）、美國舊金山、Unity Technologies，https://docs.unity3d.com/Manual/2d-game-development-landing.html，檢索日期 2026-11-18", "url": "https://docs.unity3d.com/Manual/2d-game-development-landing.html", "note": "官方的 2D 遊戲入門：專案怎麼設定、製作流程、2D 鏡頭和美術風格有哪些選擇。適合寫在第四章「開發環境與流程」", "author": "Unity Technologies", "year": "", "no": 4}, {"cat": "製作方法", "lv": "B", "cite": "Unity Technologies（未標示日期）、Tilemaps（Unity 6.6 手冊）、美國舊金山、Unity Technologies，https://docs.unity3d.com/Manual/tilemaps/tilemaps-landing.html，檢索日期 2026-11-18", "url": "https://docs.unity3d.com/Manual/tilemaps/tilemaps-landing.html", "note": "教你用 Tilemap 拼 2D 關卡：調色盤、筆刷、碰撞，還有等角（isometric）地圖。適合說明關卡怎麼做", "author": "Unity Technologies", "year": "", "no": 5}], "3D 遊戲": [{"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2026年5月）、《2024年臺灣文化內容產業調查報告 第四冊：遊戲產業類》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1187，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1187", "note": "台灣遊戲產業的官方營收數字和上中下游產業結構。可以說明遊戲是一個有規模的產業（跟 2D 遊戲那節用同一份報告）", "author": "文化內容策進院", "year": "2026", "no": 6}, {"cat": "動機佐證", "lv": "B", "cite": "張建中（2026年7月23日）、台灣電玩電競產業展登場 工研院打造遊戲科技體驗館、臺北市、中央通訊社，https://www.cna.com.tw/news/afe/202607230236.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/afe/202607230236.aspx", "note": "工研院和台灣遊戲產業振興會推「遊藝科技」，把遊戲技術用在展覽、觀光這些地方。可以說明遊戲技術在台灣有跨領域的應用", "author": "張建中", "year": "2026", "no": 7}, {"cat": "製作方法", "lv": "B", "cite": "Unity Technologies（未標示日期）、Lighting in URP（Unity 6.6 手冊）、美國舊金山、Unity Technologies，https://docs.unity.com/en-us/engine/6000.6/manual/lighting-overview/lighting，檢索日期 2026-11-18", "url": "https://docs.unity.com/en-us/engine/6000.6/manual/lighting-overview/lighting", "note": "URP 打光總覽：光源數量上限、陰影、反射探針、光照貼圖。適合寫 3D 場景氣氛和打光設定", "author": "Unity Technologies", "year": "", "no": 8}, {"cat": "製作方法", "lv": "B", "cite": "Unity Technologies（未標示日期）、Introduction to Mecanim Animation system（Unity 6.6 手冊）、美國舊金山、Unity Technologies，https://docs.unity.com/en-us/engine/6000.6/manual/animation-section/animation-mecanim/animation-overview，檢索日期 2026-11-18", "url": "https://docs.unity.com/en-us/engine/6000.6/manual/animation-section/animation-mecanim/animation-overview", "note": "說明角色動畫怎麼接進遊戲：Animation Clip、Animator Controller 狀態機、Avatar。適合寫角色動作系統", "author": "Unity Technologies", "year": "", "no": 9}, {"cat": "製作方法", "lv": "B", "cite": "Epic Games（未標示日期）、Lumen Global Illumination and Reflections in Unreal Engine（Unreal Engine 5.9 文件）、美國北卡州 Cary、Epic Games，https://dev.epicgames.com/documentation/en-us/unreal-engine/lumen-global-illumination-and-reflections-in-unreal-engine，檢索日期 2026-11-18", "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/lumen-global-illumination-and-reflections-in-unreal-engine", "note": "Unreal 預設的即時全域光照系統 Lumen 怎麼開、怎麼調。給用 Unreal 的組別寫打光方法", "author": "Epic Games", "year": "", "no": 10}, {"cat": "製作方法", "lv": "B", "cite": "Blender Foundation（未標示日期）、建模（Blender 5.3 使用手冊，繁體中文）、荷蘭阿姆斯特丹、Blender Foundation，https://docs.blender.org/manual/zh-hant/latest/modeling/index.html，檢索日期 2026-11-18", "url": "https://docs.blender.org/manual/zh-hant/latest/modeling/index.html", "note": "官方手冊的建模章節（網格、修改器、幾何節點、UV）。適合寫 3D 美術資源怎麼做", "author": "Blender Foundation", "year": "", "no": 11}], "微電影": [{"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2024年5月）、《2022-2023年臺灣文化內容產業調查報告Ⅱ：電視、電影、動畫產業》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1174，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1174", "note": "2022 年台灣電影產業營收推估約 179.5 億元，成長 16.46%；報告裡也有網路影音和 YouTube 創作者的初步分析。可以說明影視產業規模", "author": "文化內容策進院", "year": "2024", "no": 12}, {"cat": "動機佐證", "lv": "B", "cite": "魯皓平（2024年12月28日）、2024台灣票房排行榜！年度10大賣座電影，為什麼這麼受歡迎？、臺北市、遠見雜誌，https://www.gvm.com.tw/article/118130，檢索日期 2026-11-18", "url": "https://www.gvm.com.tw/article/118130", "note": "2024 年台灣票房前十名只有一部國片（角頭—大橋頭）。可以帶出國片需要更多新創作者和短片練功的論點", "author": "魯皓平", "year": "2024", "no": 13}, {"cat": "動機佐證", "lv": "B", "cite": "陳書榕（2026年10月8日）、寧可砍串流訂閱，也要買 CD、進電影院！文策院解密：台灣人的娛樂預算都跑去哪了？、臺北市、經理人月刊，https://www.managertoday.com.tw/articles/view/73071，檢索日期 2026-11-18", "url": "https://www.managertoday.com.tw/articles/view/73071", "note": "報導文策院《2025 年臺灣文化內容消費趨勢調查報告》：社群影音平台使用率 65%，15～19 歲多半先從社群影音接觸影視。可以說明微電影在社群平台上的觀眾基礎", "author": "陳書榕", "year": "2026", "no": 14}, {"cat": "製作方法", "lv": "A", "cite": "布萊克．史奈德（Blake Snyder）著，秦續蓉、馮勃翰譯（2015）、《先讓英雄救貓咪：你這輩子唯一需要的電影編劇指南》、臺北市、雲夢千里文化創業事業有限公司", "url": "https://www.hksyu.edu.hk/catalog/991002038389707546", "note": "好萊塢編劇入門書，教一句話故事（logline）和「節拍表」劇本結構。適合寫劇本怎麼發想（網址是香港樹仁大學圖書館的館藏紀錄）", "author": "布萊克．史奈德", "year": "", "no": 15}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（未標示日期）、Premiere 說明（Premiere Pro 使用手冊）、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/premiere-pro/user-guide.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/premiere-pro/user-guide.html", "note": "官方剪輯手冊：整理素材、剪輯、字幕、調色、輸出。適合寫後製流程", "author": "Adobe", "year": "", "no": 16}, {"cat": "製作方法", "lv": "B", "cite": "Blackmagic Design（未標示日期）、The Beginner's Guide to DaVinci Resolve 20、澳洲墨爾本、Blackmagic Design，https://www.blackmagicdesign.com/products/davinciresolve/training，檢索日期 2026-11-18", "url": "https://www.blackmagicdesign.com/products/davinciresolve/training", "note": "官方免費 PDF 教材，從剪輯、調色、音效到輸出都有。給用免費版 DaVinci Resolve 的組別參考", "author": "Blackmagic Design", "year": "", "no": 17}], "短影音": [{"cat": "動機佐證", "lv": "A", "cite": "台灣網路資訊中心（2025）、《2025 台灣網路報告》、臺北市、台灣網路資訊中心，https://report.twnic.tw/2025/en/index.html，檢索日期 2026-11-18", "url": "https://report.twnic.tw/2025/en/index.html", "note": "78.46% 的人三個月內看過短影音，58.04% 每天看，超過社群媒體的使用率。是短影音題目最主要的官方數據（中文全文 PDF：https://report.twnic.tw/2025/en/assets/download/TWNIC_TaiwanInternetReport_2025_CH_all.pdf，僅搜尋確認）", "author": "台灣網路資訊中心", "year": "2025", "no": 18}, {"cat": "動機佐證", "lv": "B", "cite": "王逸芯（2026年8月22日）、《科技》短影音改寫消費路徑！逾7成網友都在看、臺北市、工商時報（旺得富理財網），https://wantrich.chinatimes.com/news/20260822900157-420501，檢索日期 2026-11-18", "url": "https://wantrich.chinatimes.com/news/20260822900157-420501", "note": "報導資策會 MIC 的調查：70.5% 網友看短影音，最常用的是 YouTube Shorts（68.1%）和 FB Reels（58.4%）。可以說明平台選擇的依據", "author": "王逸芯", "year": "2026", "no": 19}, {"cat": "動機佐證", "lv": "B", "cite": "陳冠勳、陳泓屹（2026年1月4日）、NCC：逾4成民眾看過TikTok 16至25歲族群漲幅最大、臺北市、公視新聞網，https://news.pts.org.tw/article/789007，檢索日期 2026-11-18", "url": "https://news.pts.org.tw/article/789007", "note": "引用 NCC《2025 年通訊傳播市場報告》：TikTok 使用率從 2019 年的 18.7% 漲到 47.5%，16～25 歲達 72%。可以說明年輕族群短影音使用量成長", "author": "陳冠勳、陳泓屹", "year": "2026", "no": 20}, {"cat": "動機佐證", "lv": "B", "cite": "趙敏雅（2025年12月4日）、MIC調查：年輕族群聚集3大社群平台 世代分層更明顯、臺北市、中央通訊社，https://www.cna.com.tw/news/ahel/202512040348.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/ahel/202512040348.aspx", "note": "YouTube（72.3%）、Facebook（72.1%）是最多人用的平台，18～24 歲有 78% 用 Instagram。可以說明目標觀眾應該鎖定哪個平台", "author": "趙敏雅", "year": "2025", "no": 21}, {"cat": "動機佐證", "lv": "B", "cite": "陳容歆（2025年9月11日）、2025 YouTube Brandcast：透過共鳴建立超越信任的文化生態圈、美國加州山景城、Google 台灣官方部落格，https://blog.google/intl/zh-tw/products/explore-get-answers/2025-youtube-brandcast/，檢索日期 2026-11-18", "url": "https://blog.google/intl/zh-tw/products/explore-get-answers/2025-youtube-brandcast/", "note": "YouTube 官方說在台灣觸及 1,800 萬人（約上網人口的 96%），80% 的 Z 世代每個月看 Shorts。這是平台業者自己發布的數字，引用時要寫清楚來源", "author": "陳容歆", "year": "2025", "no": 22}, {"cat": "製作方法", "lv": "B", "cite": "Google（未標示日期）、開始製作 YouTube Shorts（YouTube 說明）、美國加州山景城、Google，https://support.google.com/youtube/answer/10059070?hl=zh-Hant，檢索日期 2026-11-18", "url": "https://support.google.com/youtube/answer/10059070?hl=zh-Hant", "note": "Shorts 的官方規格：直式、最長 3 分鐘、最高 1080p，以及怎麼拍和上傳。適合寫作品規格", "author": "Google", "year": "", "no": 23}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（未標示日期）、How to resize videos for social media in Premiere Pro、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/premiere-pro/using/video/auto-reframe-video.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/premiere-pro/using/video/auto-reframe-video.html", "note": "用 Premiere「自動重新構圖」把橫式影片轉成直式。適合寫一支影片怎麼改成多平台版本", "author": "Adobe", "year": "", "no": 24}], "紀錄片": [{"cat": "動機佐證", "lv": "B", "cite": "項貽斐（2026年2月24日）、紀錄片影展報名創新高 入圍揭曉台灣競賽單元女導演倍增、臺北市、鏡週刊，https://www.mirrormedia.mg/story/20260224insight002，檢索日期 2026-11-18", "url": "https://www.mirrormedia.mg/story/20260224insight002", "note": "第 15 屆台灣國際紀錄片影展（TIDF）收到 153 個國家地區 2,617 件報名，創歷史新高。可以說明紀錄片創作很熱絡", "author": "項貽斐", "year": "2026", "no": 25}, {"cat": "動機佐證", "lv": "B", "cite": "孫文臨、王舜薇、洪伃青、張士達、阿潑（2026年4月28日）、禁錮與自由──第15屆台灣國際紀錄片影展系列報導、臺北市、報導者，https://www.twreporter.org/topics/tidf-2026，檢索日期 2026-11-18", "url": "https://www.twreporter.org/topics/tidf-2026", "note": "系列報導 TIDF 台灣競賽入圍片，主題涵蓋身分、記憶、家園。可以當作選題參考，也能說明紀錄片的社會價值", "author": "孫文臨、王舜薇、洪伃青、張士達、阿潑", "year": "2026", "no": 26}, {"cat": "動機佐證", "lv": "B", "cite": "項貽斐（2026年5月10日）、娛樂透視／《紀錄觀點》引介逾900部片 多元視角關注公共議題27年、臺北市、鏡週刊，https://www.mirrormedia.mg/story/20260430insight002，檢索日期 2026-11-18", "url": "https://www.mirrormedia.mg/story/20260430insight002", "note": "公視《紀錄觀點》27 年播了 900 多部片，現在改成以委製、合製台灣作品為主，委製長片預算約 200～350 萬元。可以說明台灣紀錄片有固定的播出和資金管道", "author": "項貽斐", "year": "2026", "no": 27}, {"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2024年5月）、《2022-2023年臺灣文化內容產業調查報告Ⅱ：電視、電影、動畫產業》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1174，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1174", "note": "電視、電影產業的官方產值數字。可以說明影視（包括紀錄片的播出通路）的產業背景", "author": "文化內容策進院", "year": "2024", "no": 28}, {"cat": "製作方法", "lv": "A", "cite": "李道明（2020）、《紀錄片：歷史．美學．製作．倫理》（修訂三版）、臺北市、三民書局", "url": "https://toread.lib.nfu.edu.tw/toread/opac/bibliographic_view?id=986031", "note": "台灣學者寫的紀錄片中文專書，從歷史、美學講到製作和倫理，學生讀得懂。是第四章最推薦的中文書（網址是虎尾科大圖書館的館藏紀錄）", "author": "李道明", "year": "2020", "no": 29}, {"cat": "製作方法", "lv": "B", "cite": "財團法人公共電視文化事業基金會（2021年6月17日修訂）、《節目製播準則》（PO001 第 5.0 版）、臺北市、財團法人公共電視文化事業基金會，https://info-material.pts.org.tw/rule/PO001_5.0_a.pdf，檢索日期 2026-11-18", "url": "https://info-material.pts.org.tw/rule/PO001_5.0_a.pdf", "note": "拍真人要取得同意、拍未成年人要家長同意、偷拍和重演怎麼處理。適合寫「拍攝倫理與授權」那一節", "author": "財團法人公共電視文化事業基金會", "year": "2021", "no": 30}, {"cat": "製作方法", "lv": "B", "cite": "Blackmagic Design（未標示日期）、The Editor's Guide to DaVinci Resolve 20、澳洲墨爾本、Blackmagic Design，https://www.blackmagicdesign.com/products/davinciresolve/training，檢索日期 2026-11-18", "url": "https://www.blackmagicdesign.com/products/davinciresolve/training", "note": "官方免費剪輯教材。紀錄片素材量大，適合寫素材管理和剪輯流程", "author": "Blackmagic Design", "year": "", "no": 31}], "2D 動畫": [{"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2024年5月）、《2022-2023年臺灣文化內容產業調查報告Ⅱ：電視、電影、動畫產業》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1174，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1174", "note": "2022 年台灣動畫產業產值約 81.0 億元，成長 24.65%。是動畫題目最直接的官方產值數據", "author": "文化內容策進院", "year": "2024", "no": 32}, {"cat": "動機佐證", "lv": "B", "cite": "王舜薇（2026年11月11日）、真人實拍到轉描，《歡迎來到朵莉之家》如何在台灣做出一部動畫長片？、臺北市、報導者，https://www.twreporter.org/a/2026-taipei-golden-horse-film-festival-welcome-to-dollys-house，檢索日期 2026-11-18", "url": "https://www.twreporter.org/a/2026-taipei-golden-horse-film-festival-welcome-to-dollys-house", "note": "台灣全 2D 手繪動畫長片用「轉描」技法降低成本，入圍金馬最佳動畫長片。可以當台灣 2D 動畫的實例，也能當技法參考", "author": "王舜薇", "year": "2026", "no": 33}, {"cat": "動機佐證", "lv": "B", "cite": "魯皓平（2024年12月28日）、2024台灣票房排行榜！年度10大賣座電影，為什麼這麼受歡迎？、臺北市、遠見雜誌，https://www.gvm.com.tw/article/118130，檢索日期 2026-11-18", "url": "https://www.gvm.com.tw/article/118130", "note": "2024 年台灣票房前十名裡有《排球少年》《柯南》《SPY×FAMILY》三部日本 2D 動畫電影。可以說明台灣觀眾很愛看 2D 動畫", "author": "魯皓平", "year": "2024", "no": 34}, {"cat": "製作方法", "lv": "B", "cite": "CELSYS（未標示日期）、動畫師的技能與知識：動畫製作指南（CLIP STUDIO PAINT 官網）、日本東京、CELSYS，https://www.clipstudio.net/tc/animation/skills-knowledge/，檢索日期 2026-11-18", "url": "https://www.clipstudio.net/tc/animation/skills-knowledge/", "note": "官方繁中指南：角色設計、背景、分鏡劇本到後製的流程。適合寫製作流程規劃", "author": "CELSYS", "year": "", "no": 35}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（2023年5月24日）、如何在 Animate 中使用傳統補間動畫、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/animate/desktop/animation/classic-tween-animation.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/animate/desktop/animation/classic-tween-animation.html", "note": "官方說明關鍵影格、補間、移動導引線怎麼做。注意：Adobe 2026 年 2 月宣布 Animate 改為「維護模式」，不再加新功能，選用前請老師確認", "author": "Adobe", "year": "2023", "no": 36}], "3D 動畫": [{"cat": "動機佐證", "lv": "A", "cite": "文化內容策進院（2024年5月）、《2022-2023年臺灣文化內容產業調查報告Ⅱ：電視、電影、動畫產業》、臺北市、文化內容策進院，https://stat.moc.gov.tw/Research_Download.aspx?idno=1174，檢索日期 2026-11-18", "url": "https://stat.moc.gov.tw/Research_Download.aspx?idno=1174", "note": "台灣動畫產業 2022 年產值和成長率的官方數字（跟 2D 動畫那節用同一份報告）", "author": "文化內容策進院", "year": "2024", "no": 37}, {"cat": "動機佐證", "lv": "B", "cite": "魯皓平（2024年12月28日）、2024台灣票房排行榜！年度10大賣座電影，為什麼這麼受歡迎？、臺北市、遠見雜誌，https://www.gvm.com.tw/article/118130，檢索日期 2026-11-18", "url": "https://www.gvm.com.tw/article/118130", "note": "3D 動畫《腦筋急轉彎2》拿下 2024 年台灣票房冠軍（約 5.14 億元），也是全球票房最高的動畫電影。可以說明 3D 動畫的市場吸引力", "author": "魯皓平", "year": "2024", "no": 38}, {"cat": "動機佐證", "lv": "B", "cite": "杜欣穎（2026年8月25日）、《攻殼機動隊》重返大銀幕！製作人石川光久將訪台中會影迷、臺北市、中時新聞網，https://www.chinatimes.com/realtimenews/20260825002948-260404，檢索日期 2026-11-18", "url": "https://www.chinatimes.com/realtimenews/20260825002948-260404", "note": "台中國際動畫影展開幕片《奇談島航》由六家台灣動畫公司合作，用了 2D、3D、停格偶動畫。可以說明台灣業者會混用 3D 技法", "author": "杜欣穎", "year": "2026", "no": 39}, {"cat": "製作方法", "lv": "B", "cite": "Blender Foundation（未標示日期）、Keyframes: Introduction（Blender 5.3 Manual）、荷蘭阿姆斯特丹、Blender Foundation，https://docs.blender.org/manual/en/latest/animation/keyframes/introduction.html，檢索日期 2026-11-18", "url": "https://docs.blender.org/manual/en/latest/animation/keyframes/introduction.html", "note": "官方說明關鍵影格動畫（還有 Dope Sheet、Graph Editor 相關章節）。適合寫動畫怎麼調。註：頁面打得開，但內文太長沒有完整讀到", "author": "Blender Foundation", "year": "", "no": 40}, {"cat": "製作方法", "lv": "B", "cite": "Blender Foundation（未標示日期）、Armatures: Introduction（Blender 5.3 Manual）、荷蘭阿姆斯特丹、Blender Foundation，https://docs.blender.org/manual/en/latest/animation/armatures/introduction.html，檢索日期 2026-11-18", "url": "https://docs.blender.org/manual/en/latest/animation/armatures/introduction.html", "note": "官方說明骨架（Rig）。適合寫角色綁定。註：同上，內文沒有完整讀到", "author": "Blender Foundation", "year": "", "no": 41}, {"cat": "製作方法", "lv": "B", "cite": "Autodesk（未標示日期）、Animation Basics（Maya 2023 Help）、美國加州舊金山、Autodesk，https://help.autodesk.com/cloudhelp/2023/ENU/Maya-Animation/files/GUID-91055F04-C5E0-45DA-BE0C-218D92AF6A16.htm，檢索日期 2026-11-18", "url": "https://help.autodesk.com/cloudhelp/2023/ENU/Maya-Animation/files/GUID-91055F04-C5E0-45DA-BE0C-218D92AF6A16.htm", "note": "Maya 的各種動畫方法：關鍵影格、路徑、非線性、動作捕捉、圖層。給用 Maya 的組別（版本是 2023，比較舊）", "author": "Autodesk", "year": "", "no": 42}, {"cat": "製作方法", "lv": "B", "cite": "Epic Games（未標示日期）、Unreal Engine Sequencer Movie Tool Overview（Unreal Engine 5.9 文件）、美國北卡州 Cary、Epic Games，https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-sequencer-movie-tool-overview，檢索日期 2026-11-18", "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-sequencer-movie-tool-overview", "note": "用 Sequencer 在 Unreal 裡做鏡頭、角色、相機動畫。適合即時算圖類的 3D 動畫專題", "author": "Epic Games", "year": "", "no": 43}], "網紅直播": [{"cat": "動機佐證", "lv": "A", "cite": "台灣網路資訊中心（2025）、《2025 台灣網路報告》、臺北市、台灣網路資訊中心，https://report.twnic.tw/2025/en/index.html，檢索日期 2026-11-18", "url": "https://report.twnic.tw/2025/en/index.html", "note": "54.71% 的人過去一個月看過網紅、YouTuber 的內容，84.35% 覺得網紅講知識比較好懂。可以說明網紅內容的影響力", "author": "台灣網路資訊中心", "year": "2025", "no": 44}, {"cat": "動機佐證", "lv": "B", "cite": "蘇思云（2025年4月17日）、資策會調查：直播電商平台前3名 蝦皮、FB與momo、臺北市、中央通訊社，https://www.cna.com.tw/news/afe/202504170114.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/afe/202504170114.aspx", "note": "有網購經驗的人 73% 看過直播電商，一半的人偏好晚上 8～10 點看。可以說明直播的商業價值和最好的開播時段", "author": "蘇思云", "year": "2025", "no": 45}, {"cat": "製作方法", "lv": "B", "cite": "Google（未標示日期）、開始使用直播功能（YouTube 說明）、美國加州山景城、Google，https://support.google.com/youtube/answer/2474026?hl=zh-Hant，檢索日期 2026-11-18", "url": "https://support.google.com/youtube/answer/2474026?hl=zh-Hant", "note": "YouTube 開直播的條件（驗證頻道、年滿 16 歲）、直播方式、直式與雙格式直播。適合寫平台選擇和開播流程", "author": "Google", "year": "", "no": 46}, {"cat": "製作方法", "lv": "B", "cite": "Twitch（未標示日期）、Twitch Creator Camp、美國加州舊金山、Twitch，https://twitch.tv/creatorcamp/en/paths/going-live/quick-start-guide-to-streaming-on-twitch，檢索日期 2026-11-18", "url": "https://twitch.tv/creatorcamp/en/paths/going-live/quick-start-guide-to-streaming-on-twitch", "note": "Twitch 官方的創作者教學：開播、個人品牌、觀眾互動、營利、版權。適合寫經營策略", "author": "Twitch", "year": "", "no": 47}], "電競直播": [{"cat": "動機佐證", "lv": "B", "cite": "陳容琛（2026年10月1日）、亞運英雄聯盟闖金牌戰 對戰韓國拚電競隊史首金、臺北市、中央通訊社，https://www.cna.com.tw/news/aspt/202610010196.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/aspt/202610010196.aspx", "note": "台灣 LoL 隊在 2026 名古屋亞運連兩屆打進金牌戰。可以說明電競已經是正式國際運動賽事", "author": "陳容琛", "year": "2026", "no": 48}, {"cat": "動機佐證", "lv": "B", "cite": "陳祈安（2026年10月4日）、中華隊奪5金！2026亞運最終成績、金牌名單與獎牌榜一次看、臺北市、數位時代，https://www.bnext.com.tw/article/92373/2026-asian-games-taiwan-guide，檢索日期 2026-11-18", "url": "https://www.bnext.com.tw/article/92373/2026-asian-games-taiwan-guide", "note": "中華電競隊在 2026 亞運拿到 1 銀 3 銅。可以當台灣電競實力的佐證", "author": "陳祈安", "year": "2026", "no": 49}, {"cat": "動機佐證", "lv": "B", "cite": "陳容琛（2026年11月11日）、台灣戰隊CFO舉辦分享會 帶領學生深入了解電競產業、臺北市、中央通訊社，https://www.cna.com.tw/news/aspt/202611110348.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/aspt/202611110348.aspx", "note": "職業戰隊到大學分享，強調電競是包含營運、行銷的完整產業，不只是打電動。可以說明轉播、內容製作也是電競產業的一環", "author": "陳容琛", "year": "2026", "no": 50}, {"cat": "製作方法", "lv": "B", "cite": "Google（未標示日期）、如何選擇直播編碼器設定、位元率與解析度（YouTube 說明）、美國加州山景城、Google，https://support.google.com/youtube/answer/2853702?hl=zh-Hant，檢索日期 2026-11-18", "url": "https://support.google.com/youtube/answer/2853702?hl=zh-Hant", "note": "官方建議的直播位元率（例如 1080p60 用 H.264 是 17 Mbps）、關鍵影格間隔、RTMPS。電競畫面變化快，適合寫轉播規格怎麼訂", "author": "Google", "year": "", "no": 51}, {"cat": "製作方法", "lv": "B", "cite": "Twitch（未標示日期）、Twitch Creator Camp、美國加州舊金山、Twitch，https://twitch.tv/creatorcamp/en/paths/going-live/quick-start-guide-to-streaming-on-twitch，檢索日期 2026-11-18", "url": "https://twitch.tv/creatorcamp/en/paths/going-live/quick-start-guide-to-streaming-on-twitch", "note": "Level 2 有場景與疊圖、提示效果、雙格式直播等進階轉播技巧", "author": "Twitch", "year": "", "no": 52}], "主視覺／品牌識別": [{"cat": "動機佐證", "lv": "B", "cite": "劉曉欣（2025年10月20日）、衝了！台灣設計展在彰化達437萬人次 倒數計時送限定小物、臺北市、自由時報，https://news.ltn.com.tw/news/life/breakingnews/5217866，檢索日期 2026-11-18", "url": "https://news.ltn.com.tw/news/life/breakingnews/5217866", "note": "2025 台灣設計展在彰化累計 437 萬人次，超過前一年臺南的 420 萬；展區限定徽章請金馬、金曲主視覺的設計師方序中設計。可以說明活動主視覺和周邊小物能吸引人潮", "author": "劉曉欣", "year": "2025", "no": 53}, {"cat": "動機佐證", "lv": "B", "cite": "林育綾（2026年8月12日）、文博會排隊改善「入場速度快1倍」 交易額16.5億元創歷史新高、臺北市、ETtoday新聞雲，https://www.ettoday.net/news/20260812/3218164.htm，檢索日期 2026-11-18", "url": "https://www.ettoday.net/news/20260812/3218164.htm", "note": "2026 文博會品牌商展交易額約 16.5 億元，比去年成長 22%；IP 專區展期內簽了 41 件授權或合作。可以說明品牌、角色 IP 和衍生商品有實際的商業市場", "author": "林育綾", "year": "2026", "no": 54}, {"cat": "動機佐證", "lv": "B", "cite": "王寶兒（2026年8月6日）、魔法阿媽模型、香菜奇異筆 本土品牌文博會秀創意、臺北市、中央通訊社，https://www.cna.com.tw/news/acul/202608060175.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/acul/202608060175.aspx", "note": "2026 文博會有 870 多個品牌、1,200 多個攤位，報導舉了魔法阿媽公仔、雄獅文具「夜市味」奇異筆等衍生商品。可以當作衍生商品設計的參考案例", "author": "王寶兒", "year": "2026", "no": 55}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（2026年8月31日更新）、Illustrator 桌面說明（Illustrator 使用手冊）、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/illustrator/user-guide.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/illustrator/user-guide.html", "note": "官方繁中手冊：繪製形狀和路徑、管理顏色、文字設計、畫板、儲存和轉存。LOGO、海報這種要放大縮小都不失真的作品，適合寫在第四章", "author": "Adobe", "year": "2026", "no": 56}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（2026年11月17日更新）、Photoshop 桌面版說明（Photoshop 使用手冊）、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/photoshop/user-guide.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/photoshop/user-guide.html", "note": "官方繁中手冊：圖層、智慧型物件、遮色片、筆刷。適合寫海報的影像合成和修圖流程", "author": "Adobe", "year": "2026", "no": 57}], "手繪插畫": [{"cat": "動機佐證", "lv": "B", "cite": "黃雅詩（2026年4月14日）、波隆那童書展台灣館開幕 以故事森林展現創作能量、臺北市、中央通訊社，https://www.cna.com.tw/news/acul/202604140015.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/acul/202604140015.aspx", "note": "文策院帶 35 家出版社、228 本台灣原創書去義大利波隆那童書展。可以說明台灣繪本和童書插畫正在打國際市場", "author": "黃雅詩", "year": "2026", "no": 58}, {"cat": "動機佐證", "lv": "B", "cite": "郭靜芝（2026年7月6日）、「插畫界奧斯卡」如約來台 華山文創園區繽紛展出、臺北市、工商時報，https://www.ctee.com.tw/news/20260706701632-431207，檢索日期 2026-11-18", "url": "https://www.ctee.com.tw/news/20260706701632-431207", "note": "2026 波隆那插畫展有 81 個國家、3,520 位插畫家投稿，只選出 78 位，台灣插畫家鄭元欽入選。可以說明繪本插畫的國際舞台競爭很激烈，但台灣創作者有機會", "author": "郭靜芝", "year": "2026", "no": 59}, {"cat": "製作方法", "lv": "B", "cite": "CELSYS（2018年1月26日）、2.準備底色・著色「專家的插圖教學：和錆（Wasabi）#2」、日本東京、CELSYS（CLIP STUDIO TIPS），https://tips.clip-studio.com/zh-tw/articles/662，檢索日期 2026-11-18", "url": "https://tips.clip-studio.com/zh-tw/articles/662", "note": "CLIP STUDIO PAINT 官方帳號發的繁中教學：怎麼用自動選擇做底色、用剪裁圖層分部位上色、調整線稿顏色。適合寫角色插畫的上色流程", "author": "CELSYS", "year": "2018", "no": 60}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（2026年11月16日更新）、Adobe Fresco 筆刷概觀（Fresco 使用手冊）、美國加州聖荷西、Adobe，https://helpx.adobe.com/tw/fresco/desktop/draw-paint-animate-and-share/brushes.html，檢索日期 2026-11-18", "url": "https://helpx.adobe.com/tw/fresco/desktop/draw-paint-animate-and-share/brushes.html", "note": "官方繁中說明 Fresco 的三種筆刷（像素、即時、向量）在哪裡切換、怎麼管理。給用平板畫、想做出水彩油畫手感的組別參考（各筆刷細節要點側欄連結看）", "author": "Adobe", "year": "2026", "no": 61}], "AI 插畫": [{"cat": "動機佐證", "lv": "B", "cite": "趙敏雅（2025年12月17日）、報告：43%台灣民眾使用生成式AI 40歲以下最多、臺北市、中央通訊社，https://www.cna.com.tw/news/afe/202512170362.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/afe/202512170362.aspx", "note": "報導 TWNIC《2025 台灣網路報告》：43.19% 民眾用過生成式 AI，40 歲以下最多；約 7 成自認認得出 AI 內容，但國際研究的實際正確率只有約 61%。可以說明 AI 創作很普及，也帶出「AI 圖要標示」的問題", "author": "趙敏雅", "year": "2025", "no": 62}, {"cat": "動機佐證", "lv": "B", "cite": "劉千綾（2025年3月31日）、經濟部：AI抄襲或模仿風格若有爭議 由法院個案認定、臺北市、中央通訊社，https://www.cna.com.tw/news/afe/202503310155.aspx，檢索日期 2026-11-18", "url": "https://www.cna.com.tw/news/afe/202503310155.aspx", "note": "「吉卜力風」AI 圖爆紅時智慧局的說明：著作權保護具體「表達」，不保護「畫風」，但到底是抄襲還是模仿，有爭議要由法院個案判斷；也建議 AI 業者取得授權", "author": "劉千綾", "year": "2025", "no": 63}, {"cat": "動機佐證", "lv": "B", "cite": "王玉樹（2026年8月5日）、生成式AI著作權指引1.0出爐 列三大類合理使用 餘都要授權、臺北市、工商時報，https://www.ctee.com.tw/news/20260805701974-430503，檢索日期 2026-11-18", "url": "https://www.ctee.com.tw/news/20260805701974-430503", "note": "智慧局完成《生成式 AI 著作權指引》1.0 版：AI 不是自然人，不能當作者；要主張 AI 作品的著作權，必須說得出哪些部分是人做的、哪些是 AI 生成的。報導寫「預計近期公告」，官方正式版這次沒有查到", "author": "王玉樹", "year": "2026", "no": 64}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（未標示日期）、Adobe Firefly：為創作者打造的免費生成式 AI 工具（Firefly 產品頁常見問題）、美國加州聖荷西、Adobe，https://www.adobe.com/tw/products/firefly/，檢索日期 2026-11-18", "url": "https://www.adobe.com/tw/products/firefly/", "note": "Adobe 說 Firefly 自家模型用 Adobe Stock 授權內容和公眾領域內容訓練，生成內容可以商用。注意：Firefly 裡也能選 Google、OpenAI 等「合作夥伴模型」，Adobe Stock 說明頁寫明這些模型的訓練資料 Adobe 無法驗證，不能一概當成「商業安全」", "author": "Adobe", "year": "", "no": 65}, {"cat": "製作方法", "lv": "B", "cite": "Adobe（2026年5月15日更新）、Adobe 生成式 AI 使用者準則、美國加州聖荷西、Adobe，https://www.adobe.com/hk_zh/legal/licenses-terms/adobe-gen-ai-user-guidelines.html，檢索日期 2026-11-18", "url": "https://www.adobe.com/hk_zh/legal/licenses-terms/adobe-gen-ai-user-guidelines.html", "note": "Adobe 所有生成式 AI 功能（含 Firefly）的使用規則：禁止哪些內容、Adobe 會審核提示詞，以及不能移除 AI 生成標記（Content Credentials）。適合寫創作倫理和使用規範（開到的是香港中文版）", "author": "Adobe", "year": "2026", "no": 66}]};
+
+/* ===================== 2. 欄位定義 ===================== */
+// kind：text｜area｜select｜table｜tags｜figs｜answers
+// req：閘門欄位（描述自己作品，未填不能複製提示詞）
+// L()：依領域取欄位名稱或說明；字串則直接用
+const TAGS = {
+  game:['畫面風格','玩法','關卡','敘事','角色','音樂音效','操作手感','介面'],
+  film:['敘事結構','鏡頭語言','剪輯節奏','角色','配樂','色調','拍攝手法'],
+  anim:['畫面風格','動作表演','敘事','角色','配樂','色調','鏡頭'],
+  live:['節目形式','主持風格','互動方式','畫面包裝','剪輯','內容主題'],
+  art:['畫風','配色','構圖','字體','版面','角色造型','應用方式']
+};
+const EX = {
+  origin:{g:'去年組長的外婆住院，家人輪流照顧時常常吵架。我們發現大家其實都很關心外婆，只是說不出口，所以想做一個講「說不出口的關心」的作品。', x:'我們一直都很喜歡動畫，所以想做一個很療癒的作品。', why:'好的寫法有一件具體的事；壞的寫法只有喜好，任何組都能寫。'},
+  evid:{g:'文化內容策進院的調查指出台灣動畫產業以代工為主、原創比例低（資料1）。這表示原創短片很少有人做，正好是我們想做的方向。', x:'現在大家壓力都很大，很多人需要療癒。', why:'好的寫法說得出資料來源和它說了什麼；壞的寫法是自己的感覺。'},
+  gap:{g:'《○○》用很多旁白直接說出角色的心情，觀眾沒有自己體會的空間；我們想只用畫面和動作表現。', x:'現在的作品都太商業化，不夠有深度。', why:'好的寫法點名一件作品和一個具體的地方。'},
+  purpose:{g:'本專題以 3 分鐘 2D 手繪動畫的形式，講述一對母女在醫院等待的一夜，讓觀眾感受到家人之間沒說出口的關心。', x:'本專題希望做出一部好看又感人的動畫。', why:'好的寫法有「形式＋內容＋讓誰感受到什麼」。'},
+  works:{g:'參考了什麼：第 2 分鐘母親轉身擦眼淚的鏡頭，只拍背影，不拍臉。\n我的作品哪裡不同：我們的角色是女兒，而且整片沒有對白。', x:'參考了什麼：畫風很好看。\n我的作品哪裡不同：比較有創意。', why:'好的寫法說得出「哪一個畫面、哪一個手法」。'},
+  quotes:{g:'期末審查｜老師 B｜「中段節奏太慢，我一度不知道角色在等什麼。」｜負面', x:'大家都說很好看。', why:'好的寫法有誰說、在哪裡、原話；負面回饋一樣要寫，第六章會用到。'}
+};
+const CHAPTERS = [
+{ id:'c0', no:'〇', title:'基本資料', type:'basic', intro:'封面和每一章的提示詞都會用到這裡的資料。', groups:[
+  { title:'專題資訊', fields:[
+    {id:'title', label:'專題名稱', kind:'text', req:1, ph:'例：梅莉物語'},
+    {id:'group', label:'組別', kind:'select', opts:Object.keys(GROUPS), req:1},
+    {id:'sub', label:'子類型', kind:'select', opts:() => GROUPS[val('group')] || GROUPS['遊戲組'], req:1, hint:'會影響後面的欄位名稱、範例和老師提供的資料。'},
+    {id:'advisor', label:'指導老師', kind:'text', req:1},
+    {id:'members', label:'組員與分工', kind:'table', cols:[{n:'學號＋姓名'},{n:'負責項目'}], req:1, hint:'每位組員寫自己實際負責的工作。'},
+    {id:'tools', label:'使用的軟體與 AI 工具', kind:'area', rows:2, ph:'例：Unity 6、Procreate、Premiere、Midjourney'}
+  ]}
+]},
+{ id:'pos', no:'◆', title:'專題定位', type:'pos', intro:'先把「我們到底在做什麼」講清楚。這一步的結果會帶進後面每一章，是整份報告的地基。', groups:[
+  { title:'用 5 句話說你的專題', fields:[
+    {id:'p_what', label:'我們做的是什麼', kind:'area', rows:2, req:1, upd:1, hint:{game:'形式＋一句內容。例：一款 2D 平台遊戲，講一個不會說話的女孩在森林裡找回家人。', film:'形式＋一句內容。例：一支 5 分鐘微電影，講一個外送員在颱風夜的一趟送餐。', anim:'形式＋一句內容。例：一支 3 分鐘 2D 手繪動畫，講一對母女在醫院等待的一夜。', live:'形式＋一句內容。例：每週一次的 Twitch 直播節目，帶觀眾一起挑戰台灣在地小吃。', art:'形式＋一句內容。例：一套台中老街的節慶主視覺，包含海報、LOGO 與 5 件衍生商品。'}},
+    {id:'p_who', label:'做給誰看或玩', kind:'area', rows:2, req:1, upd:1, hint:'越具體越好。例：「20～30 歲、平常玩手機遊戲但不太玩困難遊戲的人」，不要寫「所有人」。'},
+    {id:'p_feel', label:'他們看完或玩完之後，我希望他們感受到什麼', kind:'area', rows:2, req:1, upd:1, hint:'寫一種感受或想法。例：「感受到說不出口的關心」、「發現台灣小吃背後的故事」。'},
+    {id:'p_diff', label:'和我看過的同類作品比，我們哪裡不一樣', kind:'area', rows:2, upd:1, hint:'可以先寫一部你看過的作品名稱，再寫你們哪裡不同。想不到可以留空，AI 會問你。'},
+    {id:'p_done', label:'做到什麼程度就算完成', kind:'area', rows:2, req:1, upd:1, hint:{game:'例：3 關可以從頭玩到尾，全程約 15 分鐘。', film:'例：一支 5 分鐘、有字幕的完整影片。', anim:'例：一支 3 分鐘、有配樂的完整動畫。', live:'例：完成 6 集直播，每集 1 小時，並剪出 6 支精華短片。', art:'例：主視覺海報 1 張、LOGO 與規範、衍生商品 5 件。'}}
+  ]},
+  { title:'AI 整理後的結果', sub:'貼回 AI 的結果後會自動填入，也可以自己改', fields:[
+    {id:'logline', label:'一句話介紹', kind:'area', rows:2, upd:1, hint:'30～50 字，讓沒看過作品的人聽得懂。'},
+    {id:'prove', label:'我想用作品證明的事（1～2 句，一行一句）', kind:'area', rows:2, upd:1, hint:'句型：我想知道＿＿設計，能不能讓＿＿感受到＿＿。第六章會逐句回答。'}
+  ]}
+]},
+{ id:'c1', no:'一', title:'緒論', type:'grill', words:[400,650], intro:'寫「為什麼做」和「想做到什麼」。',
+  outline:() => ['第一節 專題背景與動機','第二節 專題目的'],
+  focus:'個人起點是不是一件具體的事；動機佐證的資料說了什麼、跟題目怎麼連起來；同類作品哪裡不夠，說不說得出作品名稱；專題目的有沒有寫出「讓誰感受到什麼」。',
+  rule:'第一節依「個人起點 → 動機佐證 → 同類作品的不足」的順序寫；第二節寫專題目的，最後一段寫出本專題想用作品證明的事。',
+  groups:[
+  { title:'專題背景與動機', fields:[
+    {id:'origin', label:'個人起點', kind:'area', req:1, upd:1, ex:'origin', hint:'句型：我們會想做這個，是因為＿＿那次經驗／看到＿＿。寫一件具體的事。'},
+    {id:'evid', label:'有什麼新聞或數據支持我的動機', kind:'area', upd:1, ex:'evid', pick:'動機佐證', hint:'從下方「老師提供的資料」點選加入，再用一兩句寫出這份資料說了什麼。還沒找到就先寫〔待補〕，不會擋住你。'},
+    {id:'gap', label:'同類作品哪裡不夠', kind:'area', upd:1, ex:'gap', pre:() => val('p_diff'), hint:'已從「專題定位」帶入，可以修改。'}
+  ]},
+  { title:'專題目的', fields:[
+    {id:'purpose', label:'專題目的', kind:'area', req:1, upd:1, ex:'purpose', pre:() => val('p_what') ? '本專題以' + trimEnd(val('p_what')) + '，讓' + (trimEnd(val('p_who')) || '＿＿') + '感受到' + (trimEnd(val('p_feel')) || '＿＿') + '。' : '', hint:'已從「專題定位」自動組成句子，請改成通順的一句話。句型：本專題以＿＿形式創作＿＿，讓＿＿感受到＿＿。'},
+    {id:'_prove', kind:'echo'}
+  ]}
+]},
+{ id:'c2', no:'二', title:'參考資料與分析', type:'grill', words:[800,1000], intro:'介紹你參考過的作品，說清楚參考了什麼、你的作品哪裡不一樣。',
+  outline:() => ['第一節 參考作品介紹','第二節 參考作品與本專題的比較'],
+  focus:'每件參考作品具體參考了哪一個畫面、機制或手法；本專題和它哪裡不同；有沒有缺出品者或年份。',
+  rule:'第一節逐件介紹參考作品（作品名稱、出品者、年份、參考了什麼），並放【表2-1-1：參考作品比較表】；第二節說明本專題和這些作品的差異。介紹作品時寫出作品名稱，不需要（資料編號）。',
+  groups:[
+  { title:'參考作品', fields:[
+    {id:'works', label:'參考作品（3～5 件）', kind:'table', req:1, upd:1, ex:'works', cols:[{n:'作品名稱'},{n:'出品者（公司或作者）'},{n:'年份'},{n:'平台或類型'},{n:'參考面向', t:'tags'},{n:'具體參考了什麼（一句）'},{n:'我的作品哪裡不同'}], hint:'遊戲、影片、動畫、品牌都可以。工具會用「出品者、年份、作品名稱、平台」自動產生參考文獻，所以這幾格要填。'}
+  ]}
+]},
+{ id:'c3', no:'三', title:'專題執行與內容規劃', type:'write', words:[1000,1500], intro:'寫「計畫做什麼」：內容、規劃、範圍和時程。實際怎麼做出來，放第四章。',
+  outline:() => ['第一節 ' + L(F('theme').label), '第二節 ' + L(F('elems').label) + '、' + L(F('units').label), '第三節 ' + L(F('core').label), '第四節 製作範圍與時程'],
+  rule:'每一節開頭先用一句話說明這項規劃怎麼幫助達成專題目的；時程以【表3-4-1：製作時程表】呈現。',
+  groups:[
+  { title:'內容規劃', fields:[
+    {id:'theme', label:{game:'世界觀與故事大綱', film:'故事或主題大綱', anim:'故事大綱', live:'節目定位與主題', art:'創作主題與系列概念'}, kind:'area', rows:5, req:1, upd:1},
+    {id:'elems', label:{game:'角色設定', film:'角色或受訪者', anim:'角色設定', live:'主持人與固定班底', art:'主要角色或視覺元素'}, kind:'area', rows:4, req:1, upd:1, hint:'每一個：名稱、個性或特色、在作品裡的功能。'},
+    {id:'units', label:{game:'關卡規劃', film:'場景與段落', anim:'場景與段落', live:'節目單元', art:'系列畫面與應用場合'}, kind:'area', rows:4, req:1, upd:1},
+    {id:'core', label:{game:'核心玩法', film:'分鏡與鏡頭風格', anim:'分鏡與動畫風格', live:'節目流程與觀眾互動', art:'視覺系統（色彩、字體、圖像規則）'}, kind:'area', rows:4, req:1, upd:1, hint:{game:'玩家主要在做什麼（操作、目標、失敗會怎樣）。', film:'分鏡數量、鏡頭風格、片長。', anim:'分鏡數量、畫風、動畫方式（逐格、骨架、3D）、片長。', live:'一集的流程、觀眾怎麼參與。', art:'主色、字體、圖像元素的使用規則。'}}
+  ]},
+  { title:'範圍與時程', fields:[
+    {id:'scope', label:'做與不做', kind:'area', rows:4, req:1, upd:1, pre:() => val('p_done') ? '做：' + val('p_done') + '\n不做：〔待補：原本想做、但這次不做的部分，以及原因〕' : '', hint:'已從「專題定位」帶入。刪掉的功能也要寫，第六章「限制與未來」會用到。'},
+    {id:'schedule', label:'時程表', kind:'table', upd:1, cols:[{n:'工作項目'},{n:'負責人'},{n:'起訖週次'}], hint:'例：角色設計｜組員 B｜第 3～6 週。'}
+  ]},
+  { title:'本章的圖', fields:[
+    {id:'figs_c3', kind:'figs'}
+  ]}
+]},
+{ id:'c4', no:'四', title:'專題製作說明', type:'write', words:[1200,1800], intro:'寫「實際怎麼做出來」：步驟、工具、遇到的問題和 AI 使用。',
+  outline:() => { const v = hasVis(); return ['第一節 製作流程'].concat(v ? ['第二節 視覺識別'] : [], ['第' + (v ? '三' : '二') + '節 製作問題與解決方式', '第' + (v ? '四' : '三') + '節 AI 使用說明']); },
+  rule:'依製作流程表的順序說明每個步驟用什麼工具、做出多少；問題依「問題 → 原因 → 解決方式」寫；最後說明 AI 用在哪裡、人工修改了什麼。製作方法有引用資料時用（資料編號）。',
+  groups:[
+  { title:'製作流程', fields:[
+    {id:'flow', label:'製作流程表', kind:'table', req:1, upd:1, cols:[{n:'步驟'},{n:'使用工具'},{n:'負責人'},{n:'產出數量'},{n:'對應圖號'}], pick:'製作方法', hint:'例：角色線稿｜Procreate｜組員 B｜3 個角色、各 4 種表情｜圖4-1-1。下方可以點選官方文件或專書，當作製作方法的參考資料。'}
+  ]},
+  { title:'視覺識別', sub:'選填：有做視覺規範書的組別才需要', fields:[
+    {id:'vis', label:'有沒有視覺規範書', kind:'select', opts:['沒有，跳過這一節','有，要寫進報告']},
+    {id:'colors', label:'色彩計畫', kind:'table', upd:1, show:hasVis, cols:[{n:'色票名稱'},{n:'HEX'},{n:'用在哪'},{n:'選色理由', t:'tags', opts:['呼應角色','呼應世界觀','傳達情緒','對比與可讀性','品牌聯想']}], hint:'可以用下方步驟卡的「規範書擷取提示詞」，讓 AI 讀規範書後自動填入。'},
+    {id:'fonts', label:'字體與標準字', kind:'area', rows:3, upd:1, show:hasVis},
+    {id:'logo', label:'LOGO 設計理念', kind:'area', rows:3, upd:1, show:hasVis}
+  ]},
+  { title:'問題與 AI 使用', fields:[
+    {id:'problems', label:'製作中遇到的問題（至少 2 項）', kind:'table', req:1, upd:1, cols:[{n:'問題'},{n:'原因'},{n:'怎麼解決'}]},
+    {id:'aidecl', label:'AI 使用聲明', kind:'table', upd:1, cols:[{n:'項目'},{n:'使用的 AI 工具'},{n:'人工修改了什麼'}], hint:'哪些部分用了 AI、人工改了什麼。沒用 AI 就寫一列「全部手作」。'}
+  ]},
+  { title:'本章的圖', fields:[
+    {id:'figs_c4', kind:'figs'}
+  ]}
+]},
+{ id:'c5', no:'五', title:'專題成果', type:'grill', words:[500,800], intro:'展示完成的作品，並用別人的回饋說明作品有沒有做到你想要的效果。',
+  outline:() => ['第一節 作品成果','第二節 展出與回饋'],
+  focus:'作品實際完成的規格（片長、關卡數、張數、集數）；回饋是誰說的、在哪裡、原話是什麼；有沒有負面回饋、怎麼看待。',
+  rule:'回饋只能使用下方提供的原話，不可推測或美化；正面和負面回饋都要寫。',
+  groups:[
+  { title:'作品成果', fields:[
+    {id:'spec', label:'作品規格與畫面清單', kind:'area', rows:4, req:1, upd:1, hint:{game:'關卡數、遊玩時間、平台；要放哪些畫面（標題畫面、第一關、結局）。', film:'片長、集數、播放平台；要放哪些畫面。', anim:'片長、畫面比例、張數；要放哪些畫面。', live:'集數、每集長度、平台、觀看數；要放哪些畫面。', art:'完成的品項與尺寸；要放哪些圖。'}}
+  ]},
+  { title:'展出與回饋', fields:[
+    {id:'fbsrc', label:'回饋來源', kind:'tags', opts:['期中審查','期末審查','校內展','新一代設計展','親友試玩／試看','線上留言'], hint:'勾選你們實際收集到回饋的場合。'},
+    {id:'quotes', label:'評審或觀眾說的話（至少 3 則，其中 1 則負面）', kind:'table', upd:1, ex:'quotes', cols:[{n:'誰說的（身分）'},{n:'在哪裡'},{n:'原話'},{n:'正面或負面', t:'select', opts:['','正面','負面','建議']}], hint:'寫原話，不要改寫成「大家都說很好」。第六章會用這裡的回饋當證據。'}
+  ]},
+  { title:'本章的圖', fields:[
+    {id:'figs_c5', kind:'figs'}
+  ]}
+]},
+{ id:'c6', no:'六', title:'結論', type:'grill', words:[400,600], intro:'回頭回答「我想用作品證明的事」。這一章不放新資料。',
+  outline:() => ['第一節 結論','第二節 困難與心得','第三節 限制與未來發展'],
+  focus:'每一項「我想證明的事」有沒有做到、證據是第五章哪一則回饋；遇到最大的困難是什麼、怎麼解決；如果再多一個月會做什麼。',
+  rule:'第一節逐項回應「我想用作品證明的事」，每項寫出做到的程度和證據（第五章的哪一則回饋）；不可加入前五章沒有的新資料。',
+  groups:[
+  { title:'結論', fields:[
+    {id:'answers', label:'逐項回應「我想用作品證明的事」', kind:'answers', req:1},
+    {id:'reflect', label:'困難與心得', kind:'area', rows:4, req:1, upd:1, hint:'最大的困難是什麼、怎麼解決、學到什麼。寫一件具體的事。'},
+    {id:'limits', label:'限制與未來發展', kind:'area', rows:3, upd:1, pre:() => { const m = String(val('scope') || '').match(/不做[：:]([\s\S]*)/); return m && m[1].trim() && !/〔待補/.test(m[1]) ? '這次沒有做到：' + m[1].trim() + '\n未來發展：〔待補〕' : ''; }, hint:'可以從第三章「不做」的部分和第五章的負面回饋整理。'}
+  ]}
+]}
+];
+const FIELDS = {};
+CHAPTERS.forEach(c => c.groups.forEach(g => g.fields.forEach(f => { f.ch = c.id; FIELDS[f.id] = f; })));
+const F = id => FIELDS[id];
+const chap = id => CHAPTERS.find(c => c.id === id);
+function hasVis(){ return /^有/.test(String(val('vis') || '')); }
+
+/* ===================== 3. 範例資料（梅莉物語，組員匿名） ===================== */
+const SAMPLE = { isSample:true, values:{
+  title:'梅莉物語（the Story of Merry）', group:'遊戲組', sub:'2D 遊戲', advisor:'〔待補〕',
+  members:[['組員A（組長）','Unity 程式與整合、關卡設計、AI 場景生成'],['組員B','角色立繪、逐格動畫、過場 CG'],['組員C','LOGO、宣傳海報、衍生商品 5 件'],['組員D','專題報告、簡報、配樂與配音、素材來源表']],
+  tools:'Unity 6（URP 2D）、Procreate、ComfyUI、AI 音樂生成工具〔待補名稱〕',
+  p_what:'一款 2D 平台遊戲，講不會說話的女孩梅莉在變成森林的家裡，靠「聽懂對方」找回家人。',
+  p_who:'喜歡溫馨故事、但不擅長困難操作的玩家。',
+  p_feel:'感受到「聽懂對方」比「打倒對方」更能化解衝突。',
+  p_diff:'多數平台遊戲用血量和戰鬥製造壓力；我們沒有戰鬥，改成讓對方的情緒值慢慢平靜。',
+  p_done:'3 關可以從頭玩到尾，全程約 15 分鐘，結局以 CG 呈現。',
+  logline:'生日前一晚，家裡變成巨大的森林；不會說話的梅莉和毒舌兔子玩偶 MAO，靠「聽懂對方」化解衝突、找回家人。',
+  prove:'我想知道用「對方情緒值」取代血量，能不能讓玩家感受到理解比打倒更能化解衝突。\n我想知道失敗只推回檢查點、不扣分的設計，能不能讓不擅長操作的玩家也玩到結局。',
+  origin:'〔待補：誰先提出這個題目？源自什麼家庭經驗？為什麼是「生日前一晚」？〕',
+  evid:'〔待補：從老師提供的資料挑一份遊戲產業或獨立遊戲相關的資料〕',
+  gap:'多數平台遊戲用血量和戰鬥製造壓力；我們沒有戰鬥，改成讓對方的情緒值慢慢平靜。〔待補：舉出一款具體作品〕',
+  purpose:'本專題以 2D 平台遊戲的形式創作「梅莉物語」，以「對方情緒值」取代血量、以「傾聽」作為解謎核心，讓玩家感受到理解比打倒更能化解衝突。',
+  works:[['Celeste','Maddy Makes Games','2018','2D 平台遊戲（PC、Switch）','操作手感、關卡','跳躍的容錯設計：離開平台後短時間內還能跳','本作不追求操作難度，失敗只推回檢查點'],['Undertale','Toby Fox','2015','RPG（PC）','玩法、敘事','可以不戰鬥、用溝通化解敵人','本作完全沒有戰鬥，並把對方的情緒畫成「情緒值」'],['〔待補〕','','','','','','']],
+  theme:'生日前一晚，梅莉的家變成巨大的森林。全劇五幕：臥室、樓梯間、廚房為可玩關卡，各對應一位家人的情感事件；第四幕派對、第五幕雙胞胎覺醒以 CG 呈現。',
+  elems:'梅莉：主角，不會說話，玩家操控的角色。\nMAO：毒舌兔子玩偶，負責吐槽與翻譯動物、玩偶的需求。\n小龜：第二關，暴走後需要被安撫。\n分里爾：第三關，在前方奔跑、需要被追上的角色。',
+  units:'第一關 臥室（教學）：移動、跳躍、傾聽。\n第二關 樓梯間：小龜暴走、地形變動，平靜值到底後傾聽。\n第三關 廚房：追逐分里爾，追上 3 次後和解。\n每關 4～5 分鐘。',
+  core:'核心動作：移動＋MAO 傾聽，沒有血量、沒有攻擊。\n成功閃避或追上 → 對方情緒值前進；到底 → 觸發傾聽與和解。\n失敗：暈眩 1 秒、推回檢查點，情緒值不歸零。',
+  scope:'做：3 關可以從頭玩到尾，全程約 15 分鐘，結局以 CG 呈現。\n不做：Steam 上架、多語系、雙角色切換、戰鬥系統。理由：第 17 週要能完整試玩，人力只夠 3 關。',
+  schedule:[['三關灰盒、傾聽與情緒值系統','組員A','第 9～10 週'],['第一關整合、對話系統','組員A、B','第 11～12 週'],['第二、三關整合','組員A、B','第 13～16 週'],['期末審查','全組','第 17 週']],
+  figs_c3:[['關卡流程圖','三關的順序與對應的家人事件','第一節 世界觀與故事大綱'],['角色設定圖','梅莉、MAO、小龜、分里爾','第二節 角色設定、關卡規劃']],
+  flow:[['角色逐格動畫','Procreate','組員B','梅莉 5 組、每組 4～6 格','圖4-1-1'],['場景','ComfyUI＋人工修圖','組員A','每關 3 層視差背景','圖4-1-2'],['程式與整合','Unity 6','組員A','3 關','']],
+  vis:'有，要寫進報告',
+  colors:[['〔待補〕','〔待補〕','LOGO、標題畫面','呼應世界觀']],
+  fonts:'圓體中文字〔待補：字體名稱與授權〕', logo:'〔待補〕',
+  problems:[['範圍過大','原企劃包含 Steam 上架、多語系','收斂為 3 關'],['梅莉整隻變粉紅色','〔待補〕','〔待補〕']],
+  aidecl:[['場景背景','ComfyUI','以手繪線稿為風格參考，人工拆元件與修稿'],['配樂、音效','〔待補〕','〔待補〕']],
+  spec:'〔待補：完成後填寫〕', fbsrc:'', quotes:[['','','','']],
+  answers:[], reflect:'', limits:''
+}, srcs:[] };
+
+/* ===================== 4. 狀態與儲存 ===================== */
+const KEY = 'report-guide-v2';
+let state, cur = 'c0';
+const blank = () => ({ v:2, isSample:false, values:{ group:'遊戲組', sub:'2D 遊戲' }, srcs:[], raw:{}, body:{}, bodySig:{}, ups:{}, final:{}, read:{}, pre:{}, log:[], abs:'' });
+const clone = o => JSON.parse(JSON.stringify(o));
+function fix(){ state = Object.assign(blank(), state); ['srcs','log'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; }); ['raw','body','bodySig','ups','final','read','pre','values'].forEach(k => { state[k] = state[k] || {}; }); }
+function load(){
+  try { const s = localStorage.getItem(KEY); if (s) state = JSON.parse(s); } catch(e){}
+  if (!state) state = blank();
+  fix();
+  try { cur = localStorage.getItem(KEY + ':cur') || 'c0'; } catch(e){}
+}
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); $('#saveState').textContent = '已自動儲存 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}); }
+    catch(e){ $('#saveState').textContent = '無法自動儲存，請用「匯出」保存資料'; }
+  }, 300);
+}
+
+/* ===================== 5. 工具函式 ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const val = id => state.values[id];
+const dom = () => DOMAIN[val('sub')] || 'game';
+const L = x => x == null ? '' : typeof x === 'string' ? x : (x[dom()] || x.game || '');
+const trimEnd = s => String(s || '').trim().replace(/[。．.！!]+$/, '');
+const today = () => new Date().toISOString().slice(0, 10);
+const optsOf = f => typeof f.opts === 'function' ? f.opts() : (f.opts || []);
+const colOpts = col => col.opts || TAGS[dom()];
+const shown = f => !f.show || f.show();
+function filled(f){
+  const v = val(f.id);
+  if (f.kind === 'table') return Array.isArray(v) && v.some(r => r.some(x => String(x ?? '').trim()));
+  if (f.kind === 'answers') { const n = proveList().length; return n > 0 && (v || []).slice(0, n).filter(a => a && a.r).length === n; }
+  return String(v ?? '').trim() !== '';
+}
+const allFields = c => c.groups.flatMap(g => g.fields).filter(f => f.kind !== 'echo');
+function gate(c){ const req = allFields(c).filter(f => f.req && shown(f)); const miss = req.filter(f => !filled(f)); return { done:req.length - miss.length, total:req.length, miss }; }
+const label = f => L(f.label);
+const shortName = f => label(f).replace(/（[^）]*）/g, '').trim();
+const proveList = () => String(val('prove') || '').split('\n').map(s => s.trim()).filter(Boolean);
+const chName = c => c.type === 'basic' || c.type === 'pos' ? c.title : '第' + c.no + '章 ' + c.title;
+const chIndex = c => ['c1','c2','c3','c4','c5','c6'].indexOf(c.id) + 1;
+// 欄位值轉成提示詞用文字；表格轉成「｜」分隔的行
+function fieldText(f){
+  const v = val(f.id);
+  if (f.kind === 'table'){
+    if (!filled(f)) return '';
+    return f.cols.map(c => c.n).join('｜') + '\n' + v.filter(r => r.some(x => String(x ?? '').trim())).map(r => f.cols.map((_, i) => String(r[i] ?? '').replace(/\n/g, ' ')).join('｜')).join('\n');
+  }
+  if (f.kind === 'figs') return figList(f.ch).map(x => x.no + '：' + x.name + (x.desc ? '（' + x.desc + '）' : '')).join('\n');
+  if (f.kind === 'answers') return answersText();
+  return String(v ?? '').trim();
+}
+function dumpChapter(c){
+  return c.groups.map(g => {
+    const body = g.fields.filter(f => f.kind !== 'echo' && f.kind !== 'figs' && f.id !== 'vis' && shown(f)).map(f => '【' + shortName(f) + '】\n' + (fieldText(f) || '（未填）')).join('\n\n');
+    return body ? '## ' + g.title + '\n' + body : '';
+  }).filter(Boolean).join('\n\n');
+}
+function basics(){
+  return '專題名稱：' + (val('title') || '（未填）') + '\n組別：' + (val('group') || '') + '（' + (val('sub') || '') + '）' +
+    '\n一句話介紹：' + (val('logline') || '（未填）') + '\n使用工具：' + (val('tools') || '（未填）') +
+    '\n我想用作品證明的事：\n' + (proveList().map((s, i) => (i + 1) + '. ' + s).join('\n') || '（未填）');
+}
+// 簡單指紋：判斷欄位在貼回正文後有沒有再改
+function sig(c){ const t = JSON.stringify(allFields(c).map(f => val(f.id) ?? '')); let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return String(h); }
+
+/* ===== 圖表清單：自動編號 圖{章}-{節}-{序} ===== */
+function figList(cid){
+  const c = chap(cid), secs = c.outline(), rows = val('figs_' + cid) || [], k = chIndex(c), cnt = {};
+  return rows.filter(r => String(r[0] || '').trim()).map(r => {
+    let s = secs.indexOf(r[2]); if (s < 0) s = 0;
+    cnt[s] = (cnt[s] || 0) + 1;
+    return { no:'圖' + k + '-' + (s + 1) + '-' + cnt[s], name:String(r[0]).trim(), desc:String(r[1] || '').trim() };
+  });
+}
+
+/* ===== 我參考的資料：自己找的＋老師清單＋第二章參考作品（自動，C 級） ===== */
+function citeOf(s){
+  if (s.cite) return s.cite;
+  const a = s.author || '〔待補：作者〕', d = s.date || '〔待補：日期〕', t = s.title || '〔待補：標題〕';
+  const parts = [a + '（' + d + '）', t];
+  if (s.place) parts.push(s.place); else if (!s.url) parts.push('〔待補：出版地〕');
+  parts.push(s.pub || '〔待補：出版者或網站名稱〕');
+  return parts.join('、') + (s.url ? '，' + s.url + '，檢索日期 ' + (s.retr || today()) : '');
+}
+const yearOf = s => (String(s.year || s.date || '').match(/\d{4}/) || [''])[0];
+function workRows(){ return (val('works') || []).filter(r => String(r[0] || '').trim() && !/〔待補/.test(r[0])); }
+function workCite(r){ return (String(r[1] || '').trim() || '〔待補：出品者〕') + '（' + (String(r[2] || '').trim() || '〔待補：年份〕') + '）、' + String(r[0]).trim() + '、' + (String(r[3] || '').trim() || '〔待補：平台〕'); }
+function srcStats(){
+  const s = state.srcs, ab = s.filter(x => x.lv === 'A' || x.lv === 'B').length, c = s.filter(x => x.lv === 'C').length + workRows().length;
+  return { total:s.length + workRows().length, A:s.filter(x => x.lv === 'A').length, B:s.filter(x => x.lv === 'B').length, C:c, ab };
+}
+function srcBlock(){
+  const s = state.srcs;
+  if (!s.length) return '（還沒有加入資料。需要引用的地方一律寫【待補：資料】。）';
+  return s.map((x, i) => '資料' + (i + 1) + '｜' + x.lv + ' 級｜' + citeOf(x) +
+    (x.said ? '\n  這份資料說了什麼：' + x.said : '') + (x.quote ? '\n  可引用的一句：' + x.quote : '') + (x.rel ? '\n  跟我的作品的關係：' + x.rel : '')).join('\n');
+}
+// （資料3）或（資料1、資料3）→（作者，年份；作者，年份）
+function convertCites(t){
+  return String(t || '').replace(/（\s*(資料\s*\d+(?:\s*[、，,；;]\s*資料\s*\d+)*)\s*）/g, (m, inner) => {
+    const parts = inner.match(/\d+/g).map(n => { const s = state.srcs[+n - 1]; return s ? (s.author ? s.author.split(/[、,，]/)[0] + (/[、,，]/.test(s.author) ? '等' : '') : '〔待補：作者〕') + '，' + (yearOf(s) || '〔待補：年份〕') : '〔錯誤：資料' + n + ' 不存在〕'; });
+    return '（' + parts.join('；') + '）';
+  });
+}
+
+/* ===== 第六章：逐項回應 ===== */
+function quoteRows(){ return (val('quotes') || []).map((r, i) => ({ i, who:r[0], where:r[1], said:r[2], pn:r[3] })).filter(q => String(q.said || '').trim()); }
+function answersText(){
+  const a = val('answers') || [], qs = quoteRows();
+  return proveList().map((p, i) => {
+    const x = a[i] || {};
+    const ev = (x.ev || []).map(k => { const q = qs.find(q => q.i === k); return q ? '第五章回饋：' + (q.who || '') + '（' + (q.where || '') + '）「' + q.said + '」' : ''; }).filter(Boolean);
+    return '想證明的事 ' + (i + 1) + '：' + p + '\n  結果：' + (x.r || '（未選）') + '\n  證據：' + (ev.join('；') || '（未選）') + (x.note ? '\n  補充：' + x.note : '');
+  }).join('\n');
+}
+
+/* ===================== 6. 提示詞 ===================== */
+function posPrompt(){
+  return [
+'# 你的角色',
+'你是「多媒體遊戲發展與應用系」的學長姊，正在幫學弟妹把畢業專題「到底在做什麼」講清楚。語氣友善、口語。',
+'',
+'# 規則',
+'1. 一次只問 1 題，等我回答後再問下一題，最多 6 題。',
+'2. 追問「具體」：哪一個畫面？哪一件事？給誰？做到多少？不要問理論或學術問題。',
+'3. 下方寫（未填）或〔待補〕的地方優先問。',
+'4. 我卡住時，給我 2～3 個選項或一個填空句型讓我選，不要直接替我決定。',
+'5. 不要替我編造任何經驗、數據或作品。',
+'6. 用繁體中文，每題不超過 3 句。',
+'7. 問完 6 題、或我說「好了」時，用下面的格式輸出結果。整段放在一個程式碼區塊裡，方便我一鍵複製。只用我說過的內容整理；我沒講清楚的地方寫〔待補：缺什麼〕。',
+'',
+'===欄位更新===',
+'【我們做的是什麼】：形式＋一句內容',
+'【做給誰看或玩】：…',
+'【他們看完或玩完之後，我希望他們感受到什麼】：…',
+'【和我看過的同類作品比，我們哪裡不一樣】：…',
+'【做到什麼程度就算完成】：…',
+'【一句話介紹】：30～50 字，讓沒看過作品的人聽得懂',
+'【我想用作品證明的事】：1～2 句，一行一句，句型「我想知道＿＿設計，能不能讓＿＿感受到＿＿」',
+'===END===',
+'',
+'# 我的專題',
+'專題名稱：' + (val('title') || '（未填）'), '組別：' + (val('group') || '') + '（' + (val('sub') || '') + '）', '使用工具：' + (val('tools') || '（未填）'),
+'',
+dumpChapter(chap('pos')),
+'',
+'請從第 1 題開始。'
+  ].join('\n');
+}
+function updNames(c){ return allFields(c).filter(f => f.upd && shown(f)).map(f => '【' + shortName(f) + '】').join(''); }
+function tableHints(c){
+  const t = allFields(c).filter(f => f.upd && f.kind === 'table' && shown(f));
+  return t.length ? '表格欄位請每列寫一行、各欄以「｜」分隔，依序為：' + t.map(f => shortName(f) + '（' + f.cols.map(x => x.n).join('｜') + '）').join('；') + '。' : '';
+}
+function extraBlocks(c){
+  const x = [];
+  if (c.id !== 'c1' && c.id !== 'c2') x.push('# 專題目的（第一章）\n' + (val('purpose') || '（未填）'));
+  if (c.id.match(/c[345]/)){ const figs = figList(c.id); x.push('# 本章的圖表清單（圖號只能用這些）\n' + (figs.length ? figs.map(f => f.no + '：' + f.name + (f.desc ? '（' + f.desc + '）' : '')).join('\n') : '（沒有，正文不要放圖號）')); }
+  if (c.id === 'c6') x.push('# 第五章的回饋（只能用這些當證據）\n' + (quoteRows().map(q => (q.who || '') + '（' + (q.where || '') + '，' + (q.pn || '') + '）：「' + q.said + '」').join('\n') || '（沒有）'));
+  return x;
+}
+function writeRules(c){
+  const [a, b] = c.words;
+  return [
+'# 正文寫作規則',
+'1. 繁體中文書面語，以「本專題」自稱，以段落為主。不要用 Markdown（不要出現 ** 或 #）。',
+'2. 依這個大綱分節，節標題單獨一行：' + c.outline().join('、'),
+'3. 字數約 ' + a + '～' + b + ' 字。',
+'4. 只能用下方資料' + (c.type === 'grill' ? '和我在對話中的回答' : '') + '，不可新增數據、文獻、作品資訊或回饋。資料不足的地方寫【待補：缺什麼】。',
+'5. 引用「我參考的資料」時，只能寫（資料編號），例如（資料2）。不要自己寫作者和年份，也不可引用清單以外的資料。',
+(c.id.match(/c[345]/) ? '6. 需要放圖的地方寫【圖號：圖名】，例如【' + ((figList(c.id)[0] || {}).no || '圖' + chIndex(c) + '-1-1') + '：圖名】；圖號只能用下方圖表清單裡有的。需要表格的地方寫【表' + chIndex(c) + '-節-序：表名】。' : '6. 需要表格的地方寫【表' + chIndex(c) + '-節-序：表名】。這一章不放圖。'),
+'7. ' + c.rule
+  ];
+}
+function grillPrompt(c){
+  const n = c.id === 'c1' || c.id === 'c2' ? 6 : 5;
+  return [
+'# 你的角色',
+'你是「多媒體遊戲發展與應用系」的學長姊兼報告編輯，要幫我寫畢業專題報告的「' + chName(c) + '」。先問清楚，再寫。',
+'',
+'# 第一階段：問我問題（最多 ' + n + ' 題）',
+'1. 一次只問 1 題，等我回答後再問下一題。',
+'2. 優先追問：' + c.focus,
+'3. 下方標〔待補〕或（未填）的地方要問；空泛的形容詞（很好玩、很療癒、很感人）要追問「具體是哪裡」。',
+'4. 我卡住時，給我 2～3 個選項或一個填空句型，不要替我編造經驗、數據、回饋或作品資訊。',
+'5. 用繁體中文，口語，每題不超過 3 句。',
+'',
+'# 第二階段：寫正文',
+'問完 ' + n + ' 題、或我說「寫吧」時，直接輸出最後結果。整段放在一個程式碼區塊裡，方便我一鍵複製，格式固定如下：',
+'===本章正文===',
+'（' + chName(c) + '的正文）',
+'===欄位更新===',
+'【欄位名稱】：依我的回答整理後的新內容（只列有新資訊的欄位；欄位名稱只能用：' + updNames(c) + '）',
+'===END===',
+tableHints(c),
+'',
+...writeRules(c),
+'',
+'# 專題基本資料', basics(),
+'',
+...extraBlocks(c).flatMap(x => [x, '']),
+'# 本章資料', dumpChapter(c),
+'',
+'# 我參考的資料', srcBlock(),
+'',
+'請從第 1 題開始。'
+  ].join('\n');
+}
+function writePrompt(c){
+  return [
+'# 你的角色',
+'你是協助大學生撰寫畢業專題報告的寫作助理。報告依「多媒體遊戲發展與應用系」畢業專題報告範本撰寫。',
+'',
+'# 任務',
+'依下方資料，直接寫出「' + chName(c) + '」的正文，不用先問我問題。整段放在一個程式碼區塊裡，方便我一鍵複製，格式固定如下：',
+'===本章正文===',
+'（' + chName(c) + '的正文）',
+'===END===',
+'寫完後，在程式碼區塊外面另外列出「需要我確認的地方」3～5 點。',
+'',
+...writeRules(c),
+'',
+'# 專題基本資料', basics(),
+'',
+...extraBlocks(c).flatMap(x => [x, '']),
+'# 本章資料', dumpChapter(c),
+'',
+'# 我參考的資料', srcBlock()
+  ].join('\n');
+}
+function visPrompt(){
+  return [
+'我會上傳我們的視覺規範書（PDF 或截圖）。請讀圖，把內容整理成下面的格式，整段放在一個程式碼區塊裡，方便我一鍵複製。看不清楚或規範書沒有的寫〔待補〕，不要猜。',
+'',
+'===欄位更新===',
+'【色彩計畫】：',
+'色票名稱｜HEX｜用在哪｜選色理由',
+'（每個顏色一行；選色理由只能從這幾個選：呼應角色、呼應世界觀、傳達情緒、對比與可讀性、品牌聯想；規範書沒寫就填〔待補〕）',
+'【字體與標準字】：中英文字體名稱、字重、標準字做了哪些修改',
+'【LOGO 設計理念】：圖形由什麼元素構成、代表什麼',
+'===END===',
+'',
+'專題名稱：' + (val('title') || '（未填）'), '一句話介紹：' + (val('logline') || '（未填）')
+  ].join('\n');
+}
+function absPrompt(){
+  const bodies = ['c1','c2','c3','c4','c5','c6'].map(id => { const c = chap(id), b = String(state.body[id] || '').trim(); return b ? chName(c) + '\n' + b : ''; }).filter(Boolean).join('\n\n');
+  return [
+'# 任務',
+'依下方報告內容，寫畢業專題報告的「摘要」和「關鍵字」。',
+'',
+'# 規則',
+'1. 繁體中文書面語，約 300 字，一到兩段。',
+'2. 依序交代：創作動機與目的 → 作品內容與形式 → 製作方式 → 成果與回饋 → 結論。',
+'3. 只能用下方內容，不可新增數據或成果；不要放引用。',
+'4. 整段放在一個程式碼區塊裡，格式固定：',
+'===摘要===',
+'（摘要）',
+'===關鍵字===',
+'3～5 個關鍵字，以「、」分隔',
+'===END===',
+'',
+'# 專題基本資料', basics(),
+'',
+'# 各章正文', bodies || '（尚無正文）'
+  ].join('\n');
+}
+function promptFor(c){ return c.type === 'pos' ? posPrompt() : c.type === 'write' ? writePrompt(c) : grillPrompt(c); }
+
+/* ===================== 7. 貼回解析：拆成「本章正文」與「欄位更新」 ===================== */
+function cleanBody(t){
+  return String(t || '').replace(/\*\*/g, '').replace(/^#{1,6}\s*/gm, '').replace(/^\s*```.*$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+}
+function norm(s){ return String(s || '').replace(/（[^）]*）/g, '').replace(/[\s【】：:]/g, ''); }
+function matchField(c, name){
+  const n = norm(name); if (n.length < 2) return null;
+  const pool = allFields(c).filter(f => f.upd);
+  return pool.find(f => norm(label(f)) === n) || pool.find(f => { const l = norm(label(f)); return l.includes(n) || n.includes(l); }) || null;
+}
+function parseBack(text, c){
+  const t = String(text || '').replace(/\r/g, '').replace(/^\s*```[^\n]*$/gm, '');
+  const mB = '===本章正文===', mU = '===欄位更新===', mE = '===END===';
+  const iB = t.indexOf(mB), iU = t.indexOf(mU), iE = t.indexOf(mE);
+  let body = '', upd = '';
+  if (iB >= 0) body = t.slice(iB + mB.length, iU > iB ? iU : (iE > iB ? iE : t.length));
+  if (iU >= 0) upd = t.slice(iU + mU.length, iE > iU ? iE : t.length);
+  const noMark = iB < 0 && iU < 0;
+  if (noMark){ if (/^\s*【[^】]+】\s*[：:]/m.test(t) && c.type !== 'write') upd = t; else body = t; }
+  const ups = [];
+  let curU = null;
+  upd.split('\n').forEach(line => {
+    const m = line.match(/^\s*[-・•*]?\s*【([^】]+)】\s*[：:]\s*(.*)$/);
+    if (m){ curU = { name:m[1].trim(), text:m[2] }; ups.push(curU); }
+    else if (curU) curU.text += '\n' + line;
+  });
+  const out = ups.map(u => { const f = matchField(c, u.name); return { name:u.name, id:f ? f.id : null, text:u.text.replace(/^\n+|\s+$/g, ''), st:'pending' }; }).filter(u => u.text && !/^（?無）?$/.test(u.text));
+  return { body:cleanBody(body), ups:out, noMark };
+}
+// 欄位更新寫入：文字欄直接取代；表格欄解析「｜」分隔的行
+function applyUpdate(u){
+  const f = F(u.id); if (!f) return;
+  if (f.kind === 'table'){
+    const heads = f.cols.map(x => x.n.replace(/\s/g, ''));
+    const rows = u.text.split('\n').map(l => l.replace(/^\s*[-・•*\d.、]+\s*/, '').trim()).filter(l => /[｜|]/.test(l) && !/^[\s|｜:-]+$/.test(l))
+      .map(l => l.replace(/^[|｜]|[|｜]$/g, '').split(/[｜|]/).map(x => x.trim()))
+      .filter(r => !(r[0] && heads.includes(r[0].replace(/\s/g, ''))));
+    if (rows.length) state.values[f.id] = rows.map(r => f.cols.map((_, i) => r[i] ?? ''));
+  } else state.values[f.id] = u.text.trim();
+}
+
+/* ===================== 8. 定稿檢查（背景執行） ===================== */
+const HYPE = ['完美','極度','極致','革命性','前所未有','顛覆','無與倫比','史上','最強','非常非常','無可挑剔'];
+function finalCheck(c){
+  const b = String(state.body[c.id] || ''), block = [], warn = [];
+  if (!b.trim()){ block.push('還沒有本章正文。'); return { block, warn }; }
+  const todo = [...b.matchAll(/【待補[：:]?([^】]*)】/g)].map(m => m[1].trim() || '（未註明）');
+  if (todo.length) block.push('正文還有 ' + todo.length + ' 處【待補】：' + [...new Set(todo)].slice(0, 6).join('、') + '。把資料補進上面「我的內容」，再重新產生正文；或直接在正文裡補上並刪掉【待補】標記。');
+  const bad = [...b.matchAll(/資料\s*(\d+)/g)].map(m => +m[1]).filter(n => !state.srcs[n - 1]);
+  if (bad.length) block.push('正文引用了不存在的資料編號：' + [...new Set(bad)].map(n => '資料' + n).join('、') + '。可能是 AI 捏造的，請刪除或改成「我參考的資料」裡真的有的編號。');
+  const n = b.replace(/\s/g, '').length, [lo, hi] = c.words;
+  if (n < lo * 0.8 || n > hi * 1.25) warn.push('字數約 ' + n + ' 字，建議範圍 ' + lo + '～' + hi + ' 字。');
+  const hy = HYPE.filter(w => b.includes(w));
+  if (hy.length) warn.push('出現誇大用詞：' + hy.join('、') + '。報告要用平實的說法。');
+  const wn = workRows().map(r => String(r[0]).trim());
+  const fake = c.id === 'c2' ? [] : [...b.matchAll(/[^（）\s，。、；：「」]{1,12}（(?:19|20)\d{2}[^）]{0,8}）|（[^）]{1,30}[，,]\s*(?:19|20)\d{2}）/g)].map(m => m[0]).filter(m => !wn.some(w => m.includes(w)));
+  if (fake.length) warn.push('疑似 AI 自己加的引用：' + [...new Set(fake)].slice(0, 3).join('、') + '。引用只能寫（資料編號），請確認這些資料真的存在。');
+  if (c.id.match(/c[345]/)){
+    const ok = figList(c.id).map(f => f.no);
+    const figs = [...b.matchAll(/圖\s*(\d+-\d+-\d+)/g)].map(m => '圖' + m[1]).filter(x => !ok.includes(x));
+    if (figs.length) warn.push('正文用了圖表清單沒有的圖號：' + [...new Set(figs)].join('、') + '。');
+  }
+  if (c.id === 'c5'){ const q = quoteRows(); if (q.length < 3 || !q.some(x => x.pn === '負面')) warn.push('回饋少於 3 則，或沒有負面回饋。'); }
+  if (state.srcs.length + workRows().length < 5 && (c.id === 'c1' || c.id === 'c2')) warn.push('「我參考的資料」加參考作品還不到 5 筆。');
+  if (!state.read[c.id]) warn.push('還沒有勾選「每一段我都讀過、改過」。');
+  return { block, warn };
+}
+
+/* ===================== 9. 畫面：導覽 ===================== */
+const NAV_EXTRA = [{ id:'src', no:'＠', title:'我參考的資料' }, { id:'pv', no:'◎', title:'報告預覽' }];
+function chDone(c){ return c.type === 'basic' ? gate(c).miss.length === 0 : c.type === 'pos' ? filled(F('logline')) && filled(F('prove')) : !!state.final[c.id]; }
+function renderNav(){
+  const items = CHAPTERS.map(c => {
+    const g = gate(c), ok = chDone(c);
+    return '<button data-nav="' + c.id + '" aria-current="' + (cur === c.id) + '"><span class="no">' + c.no + '</span><span class="nm">' + c.title + '</span><span class="st' + (ok ? ' ok' : '') + '">' + (ok ? '✓' : g.done + '/' + g.total) + '</span></button>';
+  }).join('');
+  const st = srcStats();
+  $('#nav').innerHTML = items + '<hr>' + NAV_EXTRA.map(x => '<button data-nav="' + x.id + '" aria-current="' + (cur === x.id) + '"><span class="no">' + x.no + '</span><span class="nm">' + x.title + '</span><span class="st' + (x.id === 'src' && st.total >= 5 && st.ab >= 2 ? ' ok' : '') + '">' + (x.id === 'src' ? st.total + ' 筆' : '') + '</span></button>').join('');
+}
+
+/* ===================== 10. 畫面：欄位 ===================== */
+function cellHTML(f, r, ri, col, ci){
+  const v = r[ci] ?? '', key = 'data-f="' + f.id + '" data-r="' + ri + '" data-c="' + ci + '"';
+  if (col.t === 'tags') return '<td class="tags">' + colOpts(col).map(o => '<label><input type="checkbox" data-tag="' + esc(o) + '" ' + key + (String(v).split('、').includes(o) ? ' checked' : '') + '>' + esc(o) + '</label>').join('') + '</td>';
+  if (col.t === 'select') return '<td><select ' + key + ' aria-label="' + esc(col.n) + '">' + col.opts.map(o => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select></td>';
+  if (f.kind === 'figs' && ci === 2){ const secs = chap(f.ch).outline(); return '<td><select ' + key + ' aria-label="所屬節">' + secs.map(o => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select></td>'; }
+  return '<td><textarea rows="1" ' + key + ' aria-label="' + esc(col.n) + '">' + esc(v) + '</textarea></td>';
+}
+function tableHTML(f, cols){
+  let rows = val(f.id);
+  if (!Array.isArray(rows) || !rows.length){ rows = [cols.map(() => '')]; state.values[f.id] = rows; }
+  const figs = f.kind === 'figs' ? figList(f.ch) : null; let fi = 0;
+  const head = '<tr>' + (figs ? '<th>圖號</th>' : '') + cols.map(c => '<th>' + esc(c.n) + '</th>').join('') + '<th aria-label="刪除"></th></tr>';
+  const body = rows.map((r, ri) => '<tr>' + (figs ? '<td class="no">' + (String(r[0] || '').trim() ? esc((figs[fi++] || {}).no || '') : '—') + '</td>' : '') + cols.map((c, ci) => cellHTML(f, r, ri, c, ci)).join('') +
+    '<td class="del"><button data-del="' + f.id + '" data-r="' + ri + '" aria-label="刪除此列">×</button></td></tr>').join('');
+  return '<div class="tbl-wrap"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div><div><button class="btn sm" data-add="' + f.id + '">＋ 新增一列</button></div>';
+}
+function exHTML(k){
+  const e = EX[k]; if (!e) return '';
+  return '<details class="ex"><summary>看範例</summary><div class="g"><b>✓ 好的寫法</b>\n' + esc(e.g) + '</div><div class="x"><b>✗ 不好的寫法</b>\n' + esc(e.x) + '</div><p class="hint">' + esc(e.why) + '</p></details>';
+}
+function pickerHTML(cat){
+  const list = (TEACHER_REFS[val('sub')] || []).filter(r => r.cat === cat);
+  if (!list.length) return '';
+  return '<details class="picker"><summary>老師提供的資料（' + esc(val('sub')) + '｜' + cat + '，' + list.length + ' 筆）：點「加入」放進「我參考的資料」</summary><ul>' + list.map((r, i) => {
+    const has = state.srcs.some(s => s.url && s.url === r.url);
+    return '<li><div><span class="pill">' + r.lv + ' 級</span> ' + esc(r.note) + '<div class="ct">' + esc(r.cite) + '</div></div>' +
+      (has ? '<span class="pill">已加入</span>' : '<button class="btn sm pri" data-addref="' + esc(val('sub')) + '" data-i="' + (TEACHER_REFS[val('sub')].indexOf(r)) + '">加入</button>') + '</li>';
+  }).join('') + '</ul></details>';
+}
+function answersHTML(){
+  const ps = proveList(), qs = quoteRows(), a = val('answers') || [];
+  if (!ps.length) return '<p class="lock">「專題定位」還沒有「我想用作品證明的事」。<button class="btn sm" data-nav="pos">前往專題定位</button></p>';
+  return ps.map((p, i) => {
+    const x = a[i] || {};
+    return '<div class="card"><div class="full"><b>想證明的事 ' + (i + 1) + '：</b>' + esc(p) + '</div>' +
+      '<label>結果<select data-ans="' + i + '" data-k="r">' + ['','有做到','部分做到','沒做到'].map(o => '<option' + (o === (x.r || '') ? ' selected' : '') + '>' + o + '</option>').join('') + '</select></label>' +
+      '<div class="full" style="font-size:12.5px"><span style="color:var(--muted);font-weight:500">證據（勾選第五章的回饋）</span><br>' +
+      (qs.length ? qs.map(q => '<label style="flex-direction:row;gap:6px;align-items:flex-start;font-weight:400;color:var(--ink)"><input type="checkbox" style="width:auto" data-ans="' + i + '" data-ev="' + q.i + '"' + ((x.ev || []).includes(q.i) ? ' checked' : '') + '>' + esc((q.who || '') + '（' + (q.where || '') + '）「' + q.said + '」') + '</label>').join('')
+        : '第五章還沒有回饋。<button class="btn sm" data-nav="c5">前往第五章</button>') + '</div>' +
+      '<label class="full">補充說明（選填）<textarea rows="2" data-ans="' + i + '" data-k="note">' + esc(x.note || '') + '</textarea></label></div>';
+  }).join('');
+}
+function fieldHTML(f){
+  if (!shown(f)) return '';
+  if (f.kind === 'echo') return '<div class="echo"><b>我想用作品證明的事（從專題定位帶入，要改請回專題定位）</b>\n' + esc(val('prove') || '（還沒填）') + '</div>';
+  // 只預填一次：欄位空白、來源有值時
+  if (f.pre && !state.pre[f.id] && !String(val(f.id) || '').trim()){ const p = f.pre(); if (p){ state.values[f.id] = p; state.pre[f.id] = 1; save(); } }
+  const id = 'f-' + f.id, ph = esc(f.ph || '');
+  let input = '';
+  if (f.kind === 'text') input = '<input id="' + id + '" data-f="' + f.id + '" value="' + esc(val(f.id)) + '" placeholder="' + ph + '">';
+  else if (f.kind === 'area') input = '<textarea id="' + id + '" data-f="' + f.id + '" rows="' + (f.rows || 3) + '" placeholder="' + ph + '">' + esc(val(f.id)) + '</textarea>';
+  else if (f.kind === 'select'){ const o = optsOf(f), v = o.includes(val(f.id)) ? val(f.id) : o[0]; if (val(f.id) !== v){ state.values[f.id] = v; } input = '<select id="' + id + '" data-f="' + f.id + '">' + o.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>'; }
+  else if (f.kind === 'tags') input = '<div class="chk" style="padding:0;flex-direction:row;flex-wrap:wrap;gap:4px 14px">' + optsOf(f).map(o => '<label style="display:inline-flex;gap:4px;align-items:center;font-weight:400"><input type="checkbox" data-tagf="' + f.id + '" data-tag="' + esc(o) + '"' + (String(val(f.id) || '').split('、').includes(o) ? ' checked' : '') + '>' + esc(o) + '</label>').join('') + '</div>';
+  else if (f.kind === 'table') input = tableHTML(f, f.cols);
+  else if (f.kind === 'figs') input = tableHTML(f, [{n:'圖名'},{n:'這張圖要說明什麼（一句）'},{n:'所屬節'}]);
+  else if (f.kind === 'answers') input = answersHTML();
+  const lab = f.kind === 'figs' ? '圖表清單' : label(f);
+  const hint = f.kind === 'figs' ? '列出這一章要放的圖（截圖、設定圖、規範書頁面）。工具會自動編圖號，AI 寫正文時會在對應位置留下【圖號：圖名】，最後在 Word 裡換上真的圖。' : L(f.hint);
+  const todo = /〔待補/.test(JSON.stringify(val(f.id) ?? ''));
+  return '<div class="field" id="w-' + f.id + '"><' + (f.kind === 'area' || f.kind === 'text' || f.kind === 'select' ? 'label for="' + id + '"' : 'div class="lab"') + '>' + esc(lab) +
+    (f.req ? '<span class="req">必填</span>' : '<span class="opt">選填</span>') + (todo ? ' <span class="pill w">待補充</span>' : '') + '</' + (f.kind === 'area' || f.kind === 'text' || f.kind === 'select' ? 'label' : 'div') + '>' +
+    (hint ? '<p class="hint">' + esc(hint) + '</p>' : '') + (f.ex ? exHTML(f.ex) : '') + input + (f.pick ? pickerHTML(f.pick) : '') + '</div>';
+}
+
+/* ===================== 11. 畫面：AI 步驟卡 ===================== */
+let showPrompt = {}, chkResult = {};
+function upsHTML(c){
+  const ups = state.ups[c.id] || []; if (!ups.length) return '';
+  const pend = ups.filter(u => u.st === 'pending' && u.id).length;
+  return '<div class="ups"><p class="ro">AI 建議的欄位更新（唯讀：按「套用」才會寫入上面的「我的內容」）' + (pend ? '｜還有 ' + pend + ' 項待處理' : '｜都處理完了') + '</p>' + ups.map((u, i) => {
+    const f = u.id ? F(u.id) : null;
+    const hd = '<div class="hd"><b>' + esc(f ? shortName(f) : u.name) + '</b>' + (!f ? '<span class="pill w">找不到對應欄位，請手動處理</span>' : u.st === 'applied' ? '<span class="pill">✓ 已套用</span><button class="btn sm" data-jump="' + u.id + '">看欄位</button>' : u.st === 'skipped' ? '<span class="pill w">已略過</span><button class="btn sm" data-up="' + i + '" data-op="pending">復原</button>' :
+      '<button class="btn sm pri" data-up="' + i + '" data-op="applied">套用</button><button class="btn sm" data-up="' + i + '" data-op="skipped">略過</button>') + '</div>';
+    return '<div class="up ' + (u.st || '') + '">' + hd + '<div class="tx">' + esc(u.text) + '</div></div>';
+  }).join('') + (pend > 1 ? '<div><button class="btn sm" data-upall="1">全部套用</button></div>' : '') + '</div>';
+}
+function stepCard(c){
+  const g = gate(c), locked = g.miss.length > 0, isPos = c.type === 'pos';
+  const p1 = '<div class="step' + (locked ? '' : ' done') + '"><span class="n">1</span><div><h4>填上面的欄位</h4>' + (locked ? '<div class="lock"><b>還有 ' + g.miss.length + ' 個必填欄位：</b>' + g.miss.map(f => '<button class="btn sm" data-jump="' + f.id + '">' + esc(shortName(f)) + '</button>').join(' ') + '</div>' : '<p class="hint">必填欄位都填好了。選填欄位沒填也可以繼續，AI 會問你或標【待補】。</p>') + '</div></div>';
+  const what = isPos ? 'AI 會問你最多 6 題，問完會給你一段結果。' : c.type === 'grill' ? 'AI 會先問你幾個問題，問完會直接寫出本章正文。同一個對話裡完成，不用另外再貼。' : '這一章不用回答問題，AI 會直接寫出本章正文。';
+  const p2 = '<div class="step"><span class="n">2</span><div><h4>複製提示詞，貼到 ChatGPT 或 Gemini</h4><p class="hint">' + what + '建議每一章都開一個新的對話。</p>' +
+    '<div class="top-actions"><button class="btn pri" data-copy="' + c.id + '"' + (locked ? ' disabled' : '') + '>' + (isPos ? '複製定位提示詞' : c.type === 'grill' ? '複製「問答＋寫正文」提示詞' : '複製寫正文提示詞') + '</button>' +
+    '<span class="links"><a href="https://chatgpt.com/" target="_blank" rel="noopener">開啟 ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">開啟 Gemini ↗</a></span><span class="toast" id="tst-' + c.id + '"></span></div>' +
+    (c.id === 'c4' && hasVis() ? '<div class="notice"><b>視覺規範書：</b>先在 ChatGPT／Gemini 上傳規範書 PDF 或截圖，再貼上這段提示詞，把 AI 給的結果貼到下面第 3 步，就會自動填入色彩、字體、LOGO。<div style="margin-top:6px"><button class="btn sm" data-copyvis="1">複製規範書擷取提示詞</button> <span class="toast" id="tst-vis"></span></div></div>' : '') +
+    '<button class="btn sm" data-toggle="' + c.id + '" style="align-self:flex-start">' + (showPrompt[c.id] ? '收起提示詞' : '預覽提示詞（不用看也可以）') + '</button>' +
+    (showPrompt[c.id] ? '<p class="ro">唯讀：提示詞由上面的欄位自動產生。要改內容，請改上面的欄位。</p><pre class="pre">' + esc(promptFor(c)) + '</pre>' : '') + '</div></div>';
+  const raw = state.raw[c.id] || '';
+  const p3 = '<div class="step' + ((isPos ? chDone(c) : String(state.body[c.id] || '').trim()) ? ' done' : '') + '"><span class="n">3</span><div><h4>把 AI 最後給的結果貼回這裡</h4>' +
+    '<p class="hint">在 AI 回覆的程式碼區塊右上角按「複製」，貼到下面的框，再按「讀取」。' + (isPos ? '工具會把結果填進上面的欄位。' : '工具會自動拆成「本章正文」' + (c.type === 'grill' ? '和「AI 建議的欄位更新」' : '') + '。') + '</p>' +
+    '<textarea id="raw-' + c.id + '" data-raw="' + c.id + '" rows="5" placeholder="' + (isPos ? '===欄位更新===&#10;【一句話介紹】：…' : '===本章正文===&#10;…') + '">' + esc(raw) + '</textarea>' +
+    '<div class="top-actions"><button class="btn pri" data-parse="' + c.id + '">讀取</button><span class="toast" id="pmsg-' + c.id + '"></span></div>' + upsHTML(c) + '</div></div>';
+  if (isPos){
+    const ok = chDone(c);
+    return '<section class="stepcard" id="w-steps"><h3>AI 步驟</h3>' + p1 + p2 + p3 + (ok ? '<div class="next"><div><b>專題定位完成</b><p>「一句話介紹」和「我想用作品證明的事」會帶進後面每一章。</p></div><button class="btn pri" data-nav="c1">前往第一章</button></div>' : '') + '</section>';
+  }
+  const body = state.body[c.id] || '', fin = !!state.final[c.id];
+  const stale = body.trim() && state.bodySig[c.id] && state.bodySig[c.id] !== sig(c) && !fin;
+  const ck = chkResult[c.id];
+  const p4 = '<div class="step' + (fin ? ' done' : '') + '"><span class="n">4</span><div><h4>讀過、修改本章正文，然後定稿</h4>' +
+    '<p class="hint">這段就是報告書' + chName(c) + '的內容，會出現在「報告預覽」，最後貼進系上的 Word 範本。可以直接在框裡修改。</p>' +
+    (stale ? '<div class="notice"><b>上面的欄位改過了，正文還是舊的。</b>如果改的是重要內容，請重新做第 2、3 步；只改錯字的話，直接改下面的正文就好。</div>' : '') +
+    '<textarea id="body-' + c.id + '" data-body="' + c.id + '" rows="14" placeholder="按第 3 步的「讀取」後，本章正文會出現在這裡">' + esc(body) + '</textarea>' +
+    '<span class="hint"><span id="wc-' + c.id + '">約 ' + body.replace(/\s/g, '').length + ' 字</span>（建議 ' + c.words[0] + '～' + c.words[1] + ' 字）</span>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" data-read="' + c.id + '"' + (state.read[c.id] ? ' checked' : '') + '>每一段我都讀過、改過，內容都是真的</label>' +
+    (ck ? chkHTML(c, ck) : '') +
+    '<div class="top-actions"><button class="btn' + (fin ? '' : ' pri') + '" data-final="' + c.id + '">' + (fin ? '✓ 已定稿（按此取消）' : '標記本章定稿') + '</button></div>' +
+    (fin ? nextChapterHTML(c) : '') + '</div></div>';
+  return '<section class="stepcard" id="w-steps"><h3>AI 步驟</h3>' + p1 + p2 + p3 + p4 + '</section>';
+}
+function chkHTML(c, r){
+  let h = '';
+  if (r.block.length) h += '<div class="chk block"><b>還不能定稿</b><ul>' + r.block.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+  if (r.warn.length) h += '<div class="chk warn"><b>建議再看一下</b><ul>' + r.warn.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' + (r.block.length ? '' : '<div><button class="btn sm" data-forcefinal="' + c.id + '">我確認過了，仍要定稿</button></div>') + '</div>';
+  return h;
+}
+function nextChapterHTML(c){
+  const ids = CHAPTERS.map(x => x.id), nx = ids[ids.indexOf(c.id) + 1];
+  return nx ? '<div class="next"><div><b>本章完成</b><p>前往下一章。</p></div><button class="btn pri" data-nav="' + nx + '">前往' + chName(chap(nx)) + '</button></div>'
+            : '<div class="next"><div><b>六章都完成了</b><p>到「報告預覽」寫摘要，並複製全文貼到系上 Word 範本。</p></div><button class="btn pri" data-nav="pv">前往報告預覽</button></div>';
+}
+// 頁首的進度條與下一步
+function stripHTML(c){
+  const g = gate(c), b = String(state.body[c.id] || '').trim(), pend = (state.ups[c.id] || []).filter(u => u.st === 'pending' && u.id).length;
+  const isPos = c.type === 'pos';
+  const s = isPos ? [['① 填欄位', '必填 ' + g.done + '/' + g.total, !g.miss.length], ['② 複製提示詞', '回答 AI 的問題', chDone(c)], ['③ 貼回結果', '自動填入欄位', chDone(c)]]
+    : [['① 填欄位', '必填 ' + g.done + '/' + g.total, !g.miss.length], ['② 複製提示詞', c.type === 'grill' ? '回答問題後 AI 寫正文' : 'AI 直接寫正文', !!b], ['③ 貼回結果', pend ? '欄位更新剩 ' + pend + ' 項' : '拆成正文' + (c.type === 'grill' ? '＋欄位更新' : ''), !!b && !pend], ['④ 定稿', '讀過、改過', !!state.final[c.id]]];
+  let n;
+  if (g.miss.length) n = ['填完必填欄位', '還有：' + g.miss.map(shortName).join('、'), 'data-jump="' + g.miss[0].id + '"', '前往欄位'];
+  else if (isPos && !chDone(c)) n = ['複製定位提示詞，回答 AI 的問題', '問完把結果貼回下方第 3 步。', 'data-jump="steps"', '前往 AI 步驟'];
+  else if (isPos) n = ['專題定位完成', '接著寫第一章。', 'data-nav="c1"', '前往第一章'];
+  else if (!b) n = ['複製提示詞，貼到 ChatGPT 或 Gemini', c.type === 'grill' ? '回答 AI 的問題，最後把結果貼回第 3 步。' : '把 AI 寫好的結果貼回第 3 步。', 'data-jump="steps"', '前往 AI 步驟'];
+  else if (pend) n = ['處理 AI 建議的欄位更新', '逐項按「套用」或「略過」。', 'data-jump="steps"', '前往 AI 步驟'];
+  else if (!state.final[c.id]) n = ['讀過、修改本章正文，然後定稿', '直接在第 4 步的框裡修改。', 'data-jump="steps"', '前往 AI 步驟'];
+  else { const ids = CHAPTERS.map(x => x.id), nx = ids[ids.indexOf(c.id) + 1]; n = nx ? ['本章完成', '前往下一章。', 'data-nav="' + nx + '"', '前往' + chName(chap(nx))] : ['六章都完成了', '到報告預覽複製全文。', 'data-nav="pv"', '前往報告預覽']; }
+  return '<div class="strip" style="grid-template-columns:repeat(' + s.length + ',minmax(0,1fr))">' + s.map(x => '<div class="' + (x[2] ? 'done' : '') + '"><b>' + x[0] + '</b>' + x[1] + '</div>').join('') + '</div>' +
+    '<div class="next"><div><b>下一步：' + esc(n[0]) + '</b><p>' + esc(n[1]) + '</p></div><button class="btn pri" ' + n[2] + '>' + esc(n[3]) + '</button></div>';
+}
+
+/* ===================== 12. 畫面：章節頁 ===================== */
+function renderMain(){
+  if (cur === 'src') return renderSrc();
+  if (cur === 'pv') return renderPv();
+  const c = chap(cur) || chap('c0');
+  let h = '<div class="ch-head"><span class="eyebrow">' + (c.type === 'basic' ? '開始之前' : c.type === 'pos' ? '寫報告之前' : '第' + c.no + '章') + '</span><h2>' + c.title + '</h2><p>' + esc(c.intro) + '</p>' +
+    (c.words ? '<div><span class="pill">建議 ' + c.words[0] + '～' + c.words[1] + ' 字</span></div>' : '') + '</div>';
+  if (c.type !== 'basic') h += '<div id="stripBox">' + stripHTML(c) + '</div>';
+  h += c.groups.map(g => { const inner = g.fields.map(fieldHTML).join(''); return inner ? '<section class="group"><h3>' + esc(g.title) + (g.sub ? '<small>' + esc(g.sub) + '</small>' : '') + '<span class="mine">✎ 我的內容</span></h3>' + inner + '</section>' : ''; }).join('');
+  if (c.type === 'basic'){
+    h += '<section class="group"><h3>怎麼用這個工具</h3><ol class="hint" style="max-width:none;padding-left:20px;margin:0">' +
+      '<li>先填這頁的基本資料，再到「專題定位」用 5 句話說清楚你的專題。</li>' +
+      '<li>每一章都一樣：填欄位 → 按「複製提示詞」貼到 ChatGPT 或 Gemini → 把 AI 最後給的結果貼回來 → 讀過、修改後定稿。</li>' +
+      '<li>「✎ 我的內容」是你自己寫的資料，可以隨時修改；「AI 建議」是唯讀的參考，按「套用」才會寫入。</li>' +
+      '<li>參考資料統一放在「我參考的資料」，AI 只能引用那裡的資料。</li>' +
+      '<li>全部完成後，到「報告預覽」複製全文，貼到系上的 Word 範本，再換上圖片。</li>' +
+      '<li>資料存在這台電腦的瀏覽器。換電腦或備份，請用右上角的「匯出／匯入」。</li></ol>' +
+      '<p class="hint" style="max-width:none">AI 寫的是草稿，每一句都要自己讀過、改過。每次複製提示詞，工具都會自動記錄，可以放進附錄的 AI 使用紀錄。</p>' +
+      (gate(c).miss.length ? '' : '<div class="next"><div><b>下一步：專題定位</b><p>用 5 句話把專題說清楚。</p></div><button class="btn pri" data-nav="pos">前往專題定位</button></div>') + '</section>';
+  } else h += stepCard(c);
+  $('#main').innerHTML = h;
+}
+
+/* ===================== 13. 畫面：我參考的資料 ===================== */
+const SRC_FIELDS = [['lv','等級','sel'],['author','作者或機構'],['date','出版日期（年或年月）'],['title','文章題目或書名'],['place','出版地（網路資料可空白）'],['pub','出版者或網站名稱'],['url','網址'],['retr','檢索日期'],['said','這份資料說了什麼（一句話）','full'],['quote','可以引用的一句（直接貼原文）','full'],['rel','跟我的作品有什麼關係','full']];
+function renderSrc(){
+  const st = srcStats(), ok = st.total >= 5 && st.ab >= 2;
+  const cards = state.srcs.map((s, i) => '<div class="card"><div class="full" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>資料' + (i + 1) + (s.cite ? '<span class="pill" style="margin-left:6px">老師清單</span>' : '') + '</b><button class="btn sm" data-delsrc="' + i + '">刪除</button></div>' +
+    (s.cite ? '<div class="cite"><b>參考文獻：</b>' + esc(s.cite) + '</div>' + ['said','quote','rel'].map(k => { const d = SRC_FIELDS.find(x => x[0] === k); return '<label class="full">' + d[1] + '<textarea rows="2" data-src="' + i + '" data-k="' + k + '">' + esc(s[k] || '') + '</textarea></label>'; }).join('')
+      : SRC_FIELDS.map(d => '<label' + (d[2] === 'full' ? ' class="full"' : '') + '>' + d[1] + (d[2] === 'sel' ? '<select data-src="' + i + '" data-k="lv">' + ['A','B','C'].map(o => '<option' + (o === s.lv ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>' : d[2] === 'full' ? '<textarea rows="2" data-src="' + i + '" data-k="' + d[0] + '">' + esc(s[d[0]] || '') + '</textarea>' : '<input data-src="' + i + '" data-k="' + d[0] + '" value="' + esc(s[d[0]] || '') + '">') + '</label>').join('') +
+        '<div class="cite" id="cite-' + i + '"><b>自動產生的參考文獻：</b>' + esc(citeOf(s)) + '</div>') + '</div>').join('');
+  const works = workRows();
+  $('#main').innerHTML = '<div class="ch-head"><span class="eyebrow">整份報告共用</span><h2>我參考的資料</h2><p>AI 寫正文時只能引用這裡的資料，正文會寫成（資料編號），在報告預覽中自動轉成作者和年份。工具會依你填的內容自動組成系上格式的參考文獻。</p></div>' +
+    '<section class="group"><h3>目前統計</h3><div class="stat"><span class="pill' + (st.total >= 5 ? '' : ' w') + '">共 ' + st.total + ' 筆（至少 5 筆）</span><span class="pill' + (st.ab >= 2 ? '' : ' w') + '">A＋B 級 ' + st.ab + ' 筆（至少 2 筆）</span><span class="pill">A ' + st.A + '｜B ' + st.B + '｜C ' + st.C + '</span></div>' +
+    '<p class="hint"><b>A 級</b>：政府統計、學術論文、專書、官方報告　<b>B 級</b>：主流媒體報導、產業報告、官方技術文件、知名專業網站　<b>C 級</b>：部落格、個人社群、影片、參考作品本身</p>' + (ok ? '<p class="hint" style="color:var(--accent);font-weight:700">✓ 已達到系上的最低標準。</p>' : '') + '</section>' +
+    '<section class="group"><h3>老師提供的資料<small>' + esc(val('sub') || '') + '</small></h3>' + pickerHTML('動機佐證') + pickerHTML('製作方法') + ((TEACHER_REFS[val('sub')] || []).length ? '' : '<p class="hint">這個子類型目前沒有老師提供的資料。</p>') + '</section>' +
+    '<section class="group"><h3>我加入的資料<small>' + state.srcs.length + ' 筆</small></h3>' + (cards || '<p class="hint">還沒有資料。可以從上面的老師清單加入，或按下方按鈕自己新增。</p>') +
+    '<div><button class="btn pri" data-newsrc="1">＋ 自己新增一筆資料</button></div></section>' +
+    '<section class="group"><h3>第二章的參考作品<small>自動列入，C 級</small></h3>' + (works.length ? '<ul class="hint" style="padding-left:20px;margin:0">' + works.map(r => '<li>' + esc(workCite(r)) + '</li>').join('') + '</ul>' : '<p class="hint">第二章還沒有填參考作品。</p>') + '</section>';
+}
+
+/* ===================== 14. 畫面：報告預覽 ===================== */
+function bodyHTML(t){
+  return convertCites(t).split(/\n+/).map(p => p.trim()).filter(Boolean).map(p => {
+    const isHead = /^第[一二三四五六七八九十]+節/.test(p) && p.length < 40;
+    const h = esc(p).replace(/【(圖[^】]*|表[^】]*)】/g, '<span class="fig">【$1】</span>').replace(/【(待補[^】]*)】/g, '<span class="todo">【$1】</span>');
+    return isHead ? '<h3>' + h + '</h3>' : '<p>' + h + '</p>';
+  }).join('');
+}
+function refsAll(){ return state.srcs.map(citeOf).concat(workRows().map(workCite)).sort((a, b) => a.localeCompare(b, 'zh-Hant')); }
+function rocDate(){ const d = new Date(); return '中華民國 ' + (d.getFullYear() - 1911) + ' 年 ' + (d.getMonth() + 1) + ' 月'; }
+function absParts(){ const t = String(state.abs || ''), a = t.indexOf('===摘要==='), k = t.indexOf('===關鍵字==='), e = t.indexOf('===END==='); if (a < 0) return { abs:cleanBody(t), kw:'' }; return { abs:cleanBody(t.slice(a + '===摘要==='.length, k > a ? k : (e > a ? e : t.length))), kw:k >= 0 ? t.slice(k + '===關鍵字==='.length, e > k ? e : t.length).replace(/```/g, '').trim() : '' }; }
+function fullText(){
+  const ab = absParts(), ids = ['c1','c2','c3','c4','c5','c6'];
+  const figs = ids.flatMap(id => id.match(/c[345]/) ? figList(id) : []);
+  return [val('title') || '', '', '摘要', ab.abs || '（尚未產生）', ab.kw ? '關鍵字：' + ab.kw : '', '',
+    ...ids.flatMap(id => { const c = chap(id); return [chName(c), convertCites(state.body[id] || '（尚無正文）'), '']; }),
+    '圖目錄', ...figs.map(f => f.no + '　' + f.name), '',
+    '參考文獻', ...refsAll()].join('\n');
+}
+function renderPv(){
+  const ids = ['c1','c2','c3','c4','c5','c6'], ab = absParts();
+  const figs = ids.flatMap(id => id.match(/c[345]/) ? figList(id) : []);
+  const members = (val('members') || []).filter(r => String(r[0] || '').trim()).map(r => esc(r[0])).join('、');
+  const chapters = ids.map(id => { const c = chap(id), b = String(state.body[id] || '').trim();
+    return '<h2>' + chName(c) + (b && !state.final[id] ? '<span class="tag">未定稿</span>' : '') + '</h2>' + (b ? bodyHTML(b) : '<p class="ph">（這一章還沒有正文）</p>'); }).join('');
+  const log = state.log || [];
+  $('#main').innerHTML = '<div class="ch-head noprint"><span class="eyebrow">最後一步</span><h2>報告預覽</h2><p>這裡依系上範本的順序排好整份報告。黃色是要換成圖片的位置，紅色是還沒補的資料。全部完成後按「複製全文」，貼到系上 Word 範本，再換上圖片、套用標題樣式。</p></div>' +
+    '<section class="group noprint"><h3>摘要與關鍵字<small>六章都有正文後再做</small></h3><p class="hint">按下方按鈕複製提示詞，貼到 ChatGPT 或 Gemini，把結果貼回下面的框。</p>' +
+    '<div class="top-actions"><button class="btn pri" data-copyabs="1">複製摘要提示詞</button><span class="toast" id="tst-abs"></span></div>' +
+    '<textarea data-abs="1" rows="6" style="width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px 10px" placeholder="===摘要===&#10;…&#10;===關鍵字===&#10;…">' + esc(state.abs || '') + '</textarea></section>' +
+    '<section class="group noprint"><h3>輸出</h3><div class="top-actions"><button class="btn pri" data-copyall="1">複製全文（貼到 Word）</button><button class="btn" data-copyrefs="1">只複製參考文獻</button><button class="btn noframe" onclick="print()">列印／存成 PDF</button><span class="toast" id="tst-all"></span></div>' +
+    '<p class="hint">.docx 匯出功能之後會加上。現在請先複製全文，貼到系上 Word 範本。</p></section>' +
+    '<div class="paper"><div class="cover"><div>弘 光 科 技 大 學</div><div>多媒體遊戲發展與應用系</div><div class="big">畢業專題報告</div><div>主題：' + esc(val('title') || '＿＿＿＿') + '</div><div>專題學生：' + (members || '＿＿＿＿') + '</div><div>指導老師：' + esc(val('advisor') || '＿＿＿＿') + '</div><div style="margin-top:30px">' + rocDate() + '</div></div>' +
+    '<h2>摘要</h2>' + (ab.abs ? '<p>' + esc(ab.abs) + '</p>' + (ab.kw ? '<p style="text-indent:0"><b>關鍵字：</b>' + esc(ab.kw) + '</p>' : '') : '<p class="ph">（尚未產生摘要）</p>') +
+    '<h2>目錄</h2><ul>' + ids.map(id => { const c = chap(id); return '<li>' + chName(c) + '<ul>' + c.outline().map(s => '<li>' + esc(s) + '</li>').join('') + '</ul></li>'; }).join('') + '<li>參考文獻</li></ul>' +
+    '<h2>圖目錄</h2>' + (figs.length ? '<ul>' + figs.map(f => '<li>' + f.no + '　' + esc(f.name) + '</li>').join('') + '</ul>' : '<p class="ph">（第三、四、五章的圖表清單還沒有圖）</p>') +
+    chapters + '<h2>參考文獻</h2>' + (refsAll().length ? refsAll().map(r => '<p class="ref">' + esc(r) + '</p>').join('') : '<p class="ph">（還沒有參考資料）</p>') + '</div>' +
+    '<section class="group noprint"><h3>附錄：AI 使用紀錄<small>共 ' + log.length + ' 筆</small></h3><div class="tbl-wrap"><table><thead><tr><th>時間</th><th>章節</th><th>用途</th></tr></thead><tbody>' +
+    (log.length ? log.slice().reverse().map(l => '<tr><td style="padding:6px 8px">' + esc(l.t) + '</td><td style="padding:6px 8px">' + esc(l.ch) + '</td><td style="padding:6px 8px">' + esc(l.kind) + '</td></tr>').join('') : '<tr><td colspan="3" style="padding:10px 8px;color:var(--muted)">複製任何提示詞後，這裡會自動記錄。</td></tr>') +
+    '</tbody></table></div><div class="top-actions"><button class="btn sm" data-copylog="1">複製紀錄（表格）</button><span class="toast" id="tst-log"></span></div></section>';
+}
+
+function renderAll(){
+  renderNav(); renderMain();
+  $('#sampleBanner').hidden = !state.isSample;
+  $('#projName').textContent = val('title') || '專題報告引導器';
+}
+
+/* ===================== 15. 互動 ===================== */
+function refreshLight(){ // 輸入時不重繪表單，只更新導覽與進度
+  renderNav();
+  const c = chap(cur); const sb = $('#stripBox'); if (c && sb) sb.innerHTML = stripHTML(c);
+  $('#projName').textContent = val('title') || '專題報告引導器';
+}
+function logUse(ch, kind){ state.log.push({ t:new Date().toLocaleString('zh-TW', {hour12:false}), ch, kind }); save(); }
+async function copyText(text, el, ok){
+  try { await navigator.clipboard.writeText(text); if (el) el.textContent = ok; }
+  catch(e){ // 剪貼簿被擋：放進可選取的框
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if (el) el.textContent = ok; } catch(_){ if (el) el.textContent = '無法自動複製，請按「預覽提示詞」手動選取'; }
+    ta.remove();
+  }
+  if (el) setTimeout(() => { el.textContent = ''; }, 3000);
+}
+// 套用 AI 欄位更新後，正文本來就包含這些新內容，不算「欄位改過」
+function resig(c){ if (String(state.body[c.id] || '').trim()) state.bodySig[c.id] = sig(c); }
+function jumpTo(id){
+  const w = document.getElementById('w-' + id); if (!w) return;
+  w.scrollIntoView({ block:'center', behavior:'smooth' });
+  w.classList.remove('flash'); void w.offsetWidth; w.classList.add('flash');
+  const inp = w.querySelector('textarea,input,select'); if (inp && id !== 'steps') setTimeout(() => inp.focus({ preventScroll:true }), 400);
+}
+function rerenderKeepFocus(){
+  const a = document.activeElement, id = a && a.id, pos = a && a.selectionStart, y = window.scrollY;
+  renderAll(); window.scrollTo(0, y);
+  const el = id && document.getElementById(id);
+  if (el){ el.focus({ preventScroll:true }); try { if (pos != null) el.setSelectionRange(pos, pos); } catch(_){} }
+}
+document.addEventListener('input', e => {
+  const el = e.target, d = el.dataset;
+  if (d.tag !== undefined) return; // 勾選另外處理
+  if (d.raw){ state.raw[d.raw] = el.value; save(); return; }
+  if (d.body){ state.body[d.body] = el.value; save(); const n = $('#wc-' + d.body); if (n) n.textContent = '約 ' + el.value.replace(/\s/g, '').length + ' 字'; return; }
+  if (d.abs){ state.abs = el.value; save(); return; }
+  if (d.src !== undefined){ state.srcs[+d.src][d.k] = el.value; save(); const ce = $('#cite-' + d.src); if (ce) ce.innerHTML = '<b>自動產生的參考文獻：</b>' + esc(citeOf(state.srcs[+d.src])); renderNav(); return; }
+  if (d.ans !== undefined && d.k){ const a = state.values.answers = state.values.answers || []; a[+d.ans] = a[+d.ans] || {}; a[+d.ans][d.k] = el.value; save(); refreshLight(); return; }
+  if (d.f && d.r !== undefined){ state.values[d.f][+d.r][+d.c] = el.value; }
+  else if (d.f){ state.values[d.f] = el.value; }
+  else return;
+  save(); refreshLight();
+});
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset;
+  if (d.tag !== undefined){ // 勾選：表格儲存格或整欄
+    const toggle = (s, t, on) => { const a = String(s || '').split('、').filter(Boolean).filter(x => x !== t); if (on) a.push(t); return a.join('、'); };
+    if (d.tagf) state.values[d.tagf] = toggle(val(d.tagf), d.tag, el.checked);
+    else state.values[d.f][+d.r][+d.c] = toggle(state.values[d.f][+d.r][+d.c], d.tag, el.checked);
+    save(); refreshLight(); return;
+  }
+  if (d.ev !== undefined){ const a = state.values.answers = state.values.answers || []; const x = a[+d.ans] = a[+d.ans] || {}; x.ev = (x.ev || []).filter(k => k !== +d.ev); if (el.checked) x.ev.push(+d.ev); save(); return; }
+  if (d.read){ state.read[d.read] = el.checked; save(); return; }
+  if (d.f === 'group' || d.f === 'sub' || d.f === 'vis' || (d.f && d.f.startsWith('figs_') && el.tagName === 'SELECT')) { setTimeout(rerenderKeepFocus, 0); }
+});
+let armed = null;
+function armNew(btn){
+  if (armed === btn){ state = blank(); cur = 'c0'; save(); renderAll(); armed = null; btn.textContent = btn.dataset.orig; return; }
+  armed = btn; btn.dataset.orig = btn.dataset.orig || btn.textContent; btn.textContent = '再按一次確認清空';
+  setTimeout(() => { if (armed === btn){ btn.textContent = btn.dataset.orig; armed = null; } }, 3000);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.nav){ cur = d.nav; chkResult = {}; try { localStorage.setItem(KEY + ':cur', cur); } catch(_){} renderAll(); window.scrollTo({ top:0 }); return; }
+  if (d.jump){ jumpTo(d.jump); return; }
+  if (d.add){ const f = F(d.add), n = f.kind === 'figs' ? 3 : f.cols.length; state.values[f.id].push(Array(n).fill('')); save(); rerenderKeepFocus(); return; }
+  if (d.del){ const a = state.values[d.del]; a.splice(+d.r, 1); if (!a.length) a.push([]); save(); rerenderKeepFocus(); return; }
+  if (d.toggle){ showPrompt[d.toggle] = !showPrompt[d.toggle]; rerenderKeepFocus(); return; }
+  if (d.copy){ const c = chap(d.copy); if (gate(c).miss.length) return; logUse(chName(c), c.type === 'pos' ? '專題定位問答' : c.type === 'grill' ? '問答＋撰寫正文' : '撰寫正文'); copyText(promptFor(c), $('#tst-' + c.id), '已複製，貼到 ChatGPT 或 Gemini'); return; }
+  if (d.copyvis){ logUse('第四章 專題製作說明', '視覺規範書擷取'); copyText(visPrompt(), $('#tst-vis'), '已複製'); return; }
+  if (d.parse){
+    const c = chap(d.parse), raw = state.raw[c.id] || '', msg = $('#pmsg-' + c.id);
+    if (!raw.trim()){ msg.textContent = '框裡沒有內容'; return; }
+    const r = parseBack(raw, c);
+    if (c.type !== 'pos' && r.body){ state.body[c.id] = r.body; state.bodySig[c.id] = sig(c); state.final[c.id] = false; }
+    state.ups[c.id] = r.ups;
+    if (c.type === 'pos') r.ups.forEach(u => { if (u.id){ applyUpdate(u); u.st = 'applied'; } }); // 定位：直接填入
+    save(); renderAll();
+    const m = $('#pmsg-' + c.id);
+    if (m) m.textContent = (r.body && c.type !== 'pos' ? '已讀取本章正文。' : '') + (r.ups.length ? '讀到 ' + r.ups.length + ' 項欄位更新。' : '') + (!r.body && !r.ups.length ? '沒有讀到內容，請確認貼的是 AI 最後那段結果（含 ===本章正文=== 或 ===欄位更新===）。' : '') + (r.noMark && r.body ? '（沒有看到 ===本章正文=== 標記，已把整段當作正文，請檢查）' : '');
+    jumpTo('steps'); return;
+  }
+  if (d.up !== undefined){ const c = chap(cur), u = state.ups[c.id][+d.up]; if (d.op === 'applied') applyUpdate(u); u.st = d.op; resig(c); save(); rerenderKeepFocus(); return; }
+  if (d.upall){ const c = chap(cur); state.ups[c.id].forEach(u => { if (u.st === 'pending' && u.id){ applyUpdate(u); u.st = 'applied'; } }); resig(c); save(); rerenderKeepFocus(); return; }
+  if (d.final){
+    const c = chap(d.final);
+    if (state.final[c.id]){ state.final[c.id] = false; chkResult[c.id] = null; save(); rerenderKeepFocus(); return; }
+    const r = finalCheck(c); chkResult[c.id] = r;
+    if (!r.block.length && !r.warn.length){ state.final[c.id] = true; chkResult[c.id] = null; }
+    save(); rerenderKeepFocus(); return;
+  }
+  if (d.forcefinal){ state.final[d.forcefinal] = true; chkResult[d.forcefinal] = null; save(); rerenderKeepFocus(); return; }
+  if (d.addref){ const r = TEACHER_REFS[d.addref][+d.i]; if (!state.srcs.some(s => s.url === r.url)) state.srcs.push({ lv:r.lv, cite:r.cite, author:r.author, year:r.year, url:r.url, said:r.note, quote:'', rel:'' }); save(); rerenderKeepFocus(); return; }
+  if (d.newsrc){ state.srcs.push({ lv:'B', author:'', date:'', title:'', place:'', pub:'', url:'', retr:today(), said:'', quote:'', rel:'' }); save(); renderAll(); return; }
+  if (d.delsrc !== undefined){ if (b.dataset.armed){ state.srcs.splice(+d.delsrc, 1); save(); renderAll(); } else { b.dataset.armed = 1; b.textContent = '再按一次確認刪除（之後的資料編號會往前移）'; } return; }
+  if (d.copyabs){ logUse('摘要', '摘要與關鍵字'); copyText(absPrompt(), $('#tst-abs'), '已複製'); return; }
+  if (d.copyall){ copyText(fullText(), $('#tst-all'), '已複製全文'); return; }
+  if (d.copyrefs){ copyText(refsAll().join('\n'), $('#tst-all'), '已複製參考文獻'); return; }
+  if (d.copylog){ copyText('| 時間 | 章節 | 用途 |\n|---|---|---|\n' + state.log.map(l => '| ' + l.t + ' | ' + l.ch + ' | ' + l.kind + ' |').join('\n'), $('#tst-log'), '已複製'); return; }
+  if (b.id === 'btnNew' || b.id === 'btnNew2'){ armNew(b); return; }
+  if (b.id === 'btnSample'){
+    if (!state.isSample && (val('title') || state.srcs.length) && !b.dataset.armed){ b.dataset.armed = 1; b.textContent = '會取代目前資料，請先匯出備份；再按一次載入'; setTimeout(() => { b.textContent = '看完整範例'; delete b.dataset.armed; }, 4000); return; }
+    const log = state.log; state = Object.assign(blank(), clone(SAMPLE)); fix(); state.log = log || []; cur = 'pos'; save(); renderAll(); window.scrollTo({ top:0 }); return;
+  }
+  if (b.id === 'btnData'){ $('#exportBox').value = JSON.stringify(state, null, 2); $('#importMsg').textContent = ''; $('#modal').hidden = false; return; }
+  if (b.id === 'btnClose'){ $('#modal').hidden = true; return; }
+  if (b.id === 'btnCopyJson'){ copyText($('#exportBox').value, $('#jsonToast'), '已複製 JSON'); return; }
+  if (b.id === 'btnDlJson'){ const blob = new Blob([$('#exportBox').value], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (val('title') || '專題報告') + '_' + today() + '.json'; a.click(); return; }
+  if (b.id === 'btnImport'){
+    try { const o = JSON.parse($('#importBox').value); if (!o || typeof o.values !== 'object') throw 0; state = o; fix(); save(); renderAll(); $('#importMsg').textContent = '匯入完成'; $('#importBox').value = ''; }
+    catch(_){ $('#importMsg').textContent = '格式不正確：請貼上本工具匯出的完整 JSON'; }
+  }
+});
+$('#importFile').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('#importBox').value = r.result; $('#importMsg').textContent = '已讀入檔案，按「匯入」套用'; }; r.readAsText(f); });
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') $('#modal').hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').hidden = true; });
+
+/* ===================== 16. 啟動 ===================== */
+// 嵌在 claude.ai 預覽時，下載與列印會被擋，只在獨立網頁顯示
+let inFrame = true; try { inFrame = window.self !== window.top; } catch(_){}
+$('#btnDlJson').hidden = inFrame;
+document.documentElement.classList.toggle('framed', inFrame);
+load(); renderAll();
+</script>
+</body>
+</html>
