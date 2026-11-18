@@ -281,8 +281,8 @@ const CHAPTERS = [
 { id:'c0', no:'〇', title:'基本資料', type:'basic', intro:'先看整體流程，再填基本資料。封面和每一章的提示詞都會用到這裡的資料。', groups:[
   { title:'專題資訊', fields:[
     {id:'title', label:'專題名稱', kind:'text', req:1, ph:'例：梅莉物語'},
-    {id:'group', label:'組別', kind:'select', opts:Object.keys(GROUPS), req:1},
-    {id:'sub', label:'子類型', kind:'select', opts:() => GROUPS[val('group')] || GROUPS['遊戲組'], req:1, hint:'會影響後面的欄位名稱、範例和老師提供的資料。'},
+    {id:'group', label:'組別', kind:'select', opts:['（請選擇組別）'].concat(Object.keys(GROUPS)), req:1},
+    {id:'sub', label:'子類型', kind:'select', opts:() => GROUPS[val('group')] || ['（請先選組別）'], req:1, hint:'會影響後面的欄位名稱、範例和老師提供的資料。'},
     {id:'advisor', label:'指導老師', kind:'text', req:1},
     {id:'members', label:'組員與分工', kind:'table', cols:[{n:'學號＋姓名'},{n:'負責項目'}], req:1, hint:'每位組員寫自己實際負責的工作。'},
     {id:'tools', label:'使用的軟體與 AI 工具', kind:'area', rows:2, ph:'例：Unity 6、Procreate、Premiere、Midjourney'}
@@ -291,8 +291,8 @@ const CHAPTERS = [
 { id:'pos', no:'◆', title:'專題定位', type:'pos', intro:'先把「我們到底在做什麼」講清楚。這一步的結果會帶進後面每一章，是整份報告的地基。', groups:[
   { title:'用 5 句話說你的專題', fields:[
     {id:'p_what', label:'我們做的是什麼', kind:'area', rows:2, req:1, upd:1, hint:{game:'形式＋一句內容。例：一款 2D 平台遊戲，講一個不會說話的女孩在森林裡找回家人。', film:'形式＋一句內容。例：一支 5 分鐘微電影，講一個外送員在颱風夜的一趟送餐。', anim:'形式＋一句內容。例：一支 3 分鐘 2D 手繪動畫，講一對母女在醫院等待的一夜。', live:'形式＋一句內容。例：每週一次的 Twitch 直播節目，帶觀眾一起挑戰台灣在地小吃。', art:'形式＋一句內容。例：一套台中老街的節慶主視覺，包含海報、LOGO 與 5 件衍生商品。'}},
-    {id:'p_who', label:'做給誰看或玩', kind:'area', rows:2, req:1, upd:1, hint:'越具體越好。例：「20～30 歲、平常玩手機遊戲但不太玩困難遊戲的人」，不要寫「所有人」。'},
-    {id:'p_feel', label:'他們看完或玩完之後，我希望他們感受到什麼', kind:'area', rows:2, req:1, upd:1, hint:'寫一種感受或想法。例：「感受到說不出口的關心」、「發現台灣小吃背後的故事」。'},
+    {id:'p_who', label:{game:'做給誰玩', film:'做給誰看', anim:'做給誰看', live:'做給哪些觀眾看', art:'做給誰看或使用'}, kind:'area', rows:2, req:1, upd:1, hint:{game:'越具體越好，不要寫「所有人」。例：平常玩手機遊戲、但不太玩困難遊戲的 20～30 歲玩家。', film:'越具體越好，不要寫「所有人」。例：剛出社會、常一個人通勤的 20～30 歲上班族。', anim:'越具體越好，不要寫「所有人」。例：期末壓力大的大學生。', live:'越具體越好，不要寫「所有人」。例：喜歡台灣小吃、平常會看美食 YouTuber 的 18～25 歲觀眾。', art:'越具體越好，不要寫「所有人」。例：來台中老街逛節慶活動的年輕家庭；或是會買文創商品的觀光客。'}},
+    {id:'p_feel', label:{game:'他們玩完之後，我希望他們感受到什麼', film:'他們看完之後，我希望他們感受到什麼', anim:'他們看完之後，我希望他們感受到什麼', live:'他們看完節目之後，我希望他們感受到什麼', art:'他們看到作品之後，我希望他們感受到什麼'}, kind:'area', rows:2, req:1, upd:1, hint:'寫一種感受或想法。例：「感受到說不出口的關心」、「發現台灣小吃背後的故事」。'},
     {id:'p_diff', label:'和我看過的同類作品比，我們哪裡不一樣', kind:'area', rows:2, upd:1, hint:'可以先寫一部你看過的作品名稱，再寫你們哪裡不同。想不到可以留空，AI 會問你。'},
     {id:'p_done', label:'做到什麼程度就算完成', kind:'area', rows:2, req:1, upd:1, hint:{game:'例：3 關可以從頭玩到尾，全程約 15 分鐘。', film:'例：一支 5 分鐘、有字幕的完整影片。', anim:'例：一支 3 分鐘、有配樂的完整動畫。', live:'例：完成 6 集直播，每集 1 小時，並剪出 6 支精華短片。', art:'例：主視覺海報 1 張、LOGO 與規範、衍生商品 5 件。'}}
   ]},
@@ -366,7 +366,8 @@ const CHAPTERS = [
 ]},
 { id:'c5', no:'五', title:'專題成果', type:'grill', words:[500,800], intro:'展示完成的作品，並用別人的回饋說明作品有沒有做到你想要的效果。',
   outline:() => ['第一節 作品成果','第二節 展出與回饋'],
-  focus:'作品實際完成的規格（片長、關卡數、張數、集數）；回饋是誰說的、在哪裡、原話是什麼；有沒有負面回饋、怎麼看待。',
+  focus:{game:'作品實際完成的規格（關卡數、遊玩時間、平台）', film:'作品實際完成的規格（片長、集數、播放平台）', anim:'作品實際完成的規格（片長、張數、畫面比例）', live:'實際完成的節目（集數、每集長度、平台、觀看數）', art:'實際完成的品項（數量、尺寸、應用場合）'},
+  focus2:'回饋是誰說的、在哪裡、原話是什麼；有沒有負面回饋、怎麼看待。',
   rule:'回饋只能使用下方提供的原話，不可推測或美化；正面和負面回饋都要寫。',
   groups:[
   { title:'作品成果', fields:[
@@ -435,7 +436,7 @@ const SAMPLE = { isSample:true, values:{
 /* ===================== 4. 狀態與儲存 ===================== */
 const KEY = 'report-guide-v2';
 let state, cur = 'c0';
-const blank = () => ({ v:2, isSample:false, values:{ group:'遊戲組', sub:'2D 遊戲' }, srcs:[], raw:{}, body:{}, bodySig:{}, ups:{}, final:{}, read:{}, pre:{}, log:[], abs:'', nlm:{} });
+const blank = () => ({ v:2, isSample:false, values:{}, srcs:[], raw:{}, body:{}, bodySig:{}, ups:{}, final:{}, read:{}, pre:{}, log:[], abs:'', nlm:{} });
 const clone = o => JSON.parse(JSON.stringify(o));
 function fix(){ state = Object.assign(blank(), state); ['srcs','log'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; }); ['raw','body','bodySig','ups','final','read','pre','values','nlm'].forEach(k => { state[k] = state[k] || {}; }); }
 function load(){
@@ -468,6 +469,7 @@ function filled(f){
   const v = val(f.id);
   if (f.kind === 'table') return Array.isArray(v) && v.some(r => r.some(x => String(x ?? '').trim()));
   if (f.kind === 'answers') { const n = proveList().length; return n > 0 && (v || []).slice(0, n).filter(a => a && a.r).length === n; }
+  if (f.kind === 'select' && /^（/.test(String(v ?? ''))) return false;
   return String(v ?? '').trim() !== '';
 }
 const allFields = c => c.groups.flatMap(g => g.fields).filter(f => f.kind !== 'echo');
@@ -569,11 +571,11 @@ function posPrompt(){
 '7. 問完 6 題、或我說「好了」時，用下面的格式輸出結果。整段放在一個程式碼區塊裡，方便我一鍵複製。只用我說過的內容整理；我沒講清楚的地方寫〔待補：缺什麼〕。',
 '',
 '===欄位更新===',
-'【我們做的是什麼】：形式＋一句內容',
-'【做給誰看或玩】：…',
-'【他們看完或玩完之後，我希望他們感受到什麼】：…',
-'【和我看過的同類作品比，我們哪裡不一樣】：…',
-'【做到什麼程度就算完成】：…',
+'【' + label(F('p_what')) + '】：形式＋一句內容',
+'【' + label(F('p_who')) + '】：…',
+'【' + label(F('p_feel')) + '】：…',
+'【' + label(F('p_diff')) + '】：…',
+'【' + label(F('p_done')) + '】：…',
 '【一句話介紹】：30～50 字，讓沒看過作品的人聽得懂',
 '【我想用作品證明的事】：1～2 句，一行一句，句型「我想知道＿＿設計，能不能讓＿＿感受到＿＿」',
 '===END===',
@@ -619,8 +621,8 @@ function grillPrompt(c){
 '',
 '# 第一階段：問我問題（最多 ' + n + ' 題）',
 '1. 一次只問 1 題，等我回答後再問下一題。',
-'2. 優先追問：' + c.focus,
-'3. 下方標〔待補〕或（未填）的地方要問；空泛的形容詞（很好玩、很療癒、很感人）要追問「具體是哪裡」。',
+'2. 優先追問：' + L(c.focus) + (c.focus2 ? '；' + c.focus2 : ''),
+'3. 下方標〔待補〕或（未填）的地方要問；空泛的形容詞（' + (dom() === 'game' ? '很好玩' : '很好看') + '、很療癒、很感人）要追問「具體是哪裡」。',
 '4. 我卡住時，給我 2～3 個選項或一個填空句型，不要替我編造經驗、數據、回饋或作品資訊。',
 '5. 用繁體中文，口語，每題不超過 3 句。',
 '',
@@ -964,9 +966,9 @@ function flowchartHTML(){
 }
 // NotebookLM 可以整理的欄位（依目前組別顯示欄位名稱）
 const NLM_IDS = ['title','tools','members','p_what','p_who','p_feel','p_diff','p_done','origin','evid','gap','purpose','works','theme','elems','units','core','scope','schedule','flow','problems','aidecl','spec','quotes'];
-const NLM_HINT = { origin:'為什麼想做這個題目（具體的經驗或事件）', evid:'來源中提到的新聞、統計或調查：寫出資料名稱、出處和它說了什麼', gap:'來源中提到的同類作品，以及它們哪裡不夠', purpose:'來源中寫的專題目的', scope:'做什麼、不做什麼、為什麼不做', spec:'作品目前的規格（片長、關卡數、張數、集數）', p_diff:'和同類作品哪裡不一樣（寫出作品名稱）' };
+const NLM_HINT = { origin:'為什麼想做這個題目（具體的經驗或事件）', evid:'來源中提到的新聞、統計或調查：寫出資料名稱、出處和它說了什麼', gap:'來源中提到的同類作品，以及它們哪裡不夠', purpose:'來源中寫的專題目的', scope:'做什麼、不做什麼、為什麼不做', spec:'作品目前的規格（' + '{SPEC}' + '）', p_diff:'和同類作品哪裡不一樣（寫出作品名稱）' };
 function nlmPrompt(){
-  const byCh = CHAPTERS.map(c => { const fs = NLM_IDS.map(F).filter(f => f.ch === c.id); return fs.length ? '（' + chName(c) + '）\n' + fs.map(f => '【' + shortName(f) + '】：' + (f.kind === 'table' ? '每列一行，各欄以｜分隔，依序為：' + f.cols.map(x => x.n).join('｜') : (NLM_HINT[f.id] || (L(f.hint) || '').split('。')[0]))).join('\n') : ''; }).filter(Boolean).join('\n\n');
+  const byCh = CHAPTERS.map(c => { const fs = NLM_IDS.map(F).filter(f => f.ch === c.id); return fs.length ? '（' + chName(c) + '）\n' + fs.map(f => '【' + shortName(f) + '】：' + (f.kind === 'table' ? '每列一行，各欄以｜分隔，依序為：' + f.cols.map(x => x.n).join('｜') : (NLM_HINT[f.id] ? NLM_HINT[f.id].replace('{SPEC}', {game:'關卡數、遊玩時間', film:'片長、集數', anim:'片長、張數', live:'集數、每集長度', art:'品項、數量、尺寸'}[dom()]) : (L(f.hint) || '').split('。')[0]))).join('\n') : ''; }).filter(Boolean).join('\n\n');
   return [
 '你是幫我整理畢業專題資料的助理。請「只根據我上傳的來源」（歷次提案報告書、企劃書、簡報、會議紀錄），把內容整理成下面的欄位。',
 '',
@@ -1009,7 +1011,7 @@ function nlmHTML(){
   }).join('') + (empty ? '<div><button class="btn sm" data-nupall="1">全部套用（只填入還空著的欄位，共 ' + empty + ' 項）</button></div>' : '') + '</div>' : '';
   return '<section class="stepcard" id="w-nlm"><h3>流程 ①② 用 NotebookLM 彙整歷次提案<small style="font-family:var(--f-body);font-size:12.5px;font-weight:400;color:var(--muted);margin-left:8px">選用，但很省時間</small></h3>' +
     '<div class="step"><span class="n">1</span><div><h4>上傳資料到 NotebookLM</h4><p class="hint">到 NotebookLM 建立一個筆記本，把歷次的提案報告書、企劃書、簡報（PDF、Word、Google 簡報都可以）都加入來源。<b>請先選好上面的組別和子類型</b>，欄位名稱會跟著改變。</p>' +
-    '<div class="top-actions"><button class="btn pri" data-copynlm="1">複製 NotebookLM 彙整提示詞</button><span class="links"><a href="https://notebooklm.google.com/" target="_blank" rel="noopener">開啟 NotebookLM ↗</a></span><span class="toast" id="tst-nlm"></span></div>' +
+    (DOMAIN[val('sub')] ? '' : '<div class="lock"><b>請先在上面選好組別和子類型，</b>提示詞會依你的組別產生對應的欄位名稱。</div>') + '<div class="top-actions"><button class="btn pri" data-copynlm="1"' + (DOMAIN[val('sub')] ? '' : ' disabled') + '>複製 NotebookLM 彙整提示詞</button><span class="links"><a href="https://notebooklm.google.com/" target="_blank" rel="noopener">開啟 NotebookLM ↗</a></span><span class="toast" id="tst-nlm"></span></div>' +
     '<button class="btn sm" data-togglenlm="1" style="align-self:flex-start">' + (showPrompt.nlm ? '收起提示詞' : '預覽提示詞（不用看也可以）') + '</button>' + (showPrompt.nlm ? '<pre class="pre">' + esc(nlmPrompt()) + '</pre>' : '') + '</div></div>' +
     '<div class="step' + (ups.length ? ' done' : '') + '"><span class="n">2</span><div><h4>把 NotebookLM 的回答貼回這裡</h4><p class="hint">在 NotebookLM 回答的右下角按「複製」，貼到下面的框，再按「讀取」。工具會把內容分配到各章的欄位。</p>' +
     '<textarea data-nlmraw="1" rows="5" placeholder="===欄位更新===&#10;【我們做的是什麼】：…">' + esc(state.nlm.raw || '') + '</textarea>' +
@@ -1285,7 +1287,7 @@ document.addEventListener('click', e => {
   if (d.del){ const a = state.values[d.del]; a.splice(+d.r, 1); if (!a.length) a.push([]); save(); rerenderKeepFocus(); return; }
   if (d.toggle){ showPrompt[d.toggle] = !showPrompt[d.toggle]; rerenderKeepFocus(); return; }
   if (d.copy){ const c = chap(d.copy); if (gate(c).miss.length) return; logUse(chName(c), c.type === 'pos' ? '專題定位問答' : c.type === 'grill' ? '問答＋撰寫正文' : '撰寫正文'); copyText(promptFor(c), $('#tst-' + c.id), '已複製，貼到 ChatGPT 或 Gemini'); return; }
-  if (d.copynlm){ logUse('基本資料', 'NotebookLM 彙整歷次提案'); copyText(nlmPrompt(), $('#tst-nlm'), '已複製，貼到 NotebookLM 的對話框'); return; }
+  if (d.copynlm){ if (!DOMAIN[val('sub')]) return; logUse('基本資料', 'NotebookLM 彙整歷次提案'); copyText(nlmPrompt(), $('#tst-nlm'), '已複製，貼到 NotebookLM 的對話框'); return; }
   if (d.togglenlm){ showPrompt.nlm = !showPrompt.nlm; rerenderKeepFocus(); return; }
   if (d.parsenlm){ const ups = parseNlm(state.nlm.raw); state.nlm.ups = ups; save(); renderAll(); const m = $('#pmsg-nlm'); if (m) m.textContent = ups.length ? '讀到 ' + ups.length + ' 個欄位，請逐項套用或略過。' : '沒有讀到內容，請確認貼的是 NotebookLM 的回答（每段以【欄位名稱】：開頭）。'; jumpTo('nlm'); return; }
   if (d.nup !== undefined){ const u = state.nlm.ups[+d.nup]; if (d.op === 'applied') applyUpdate(u); u.st = d.op; save(); rerenderKeepFocus(); return; }
