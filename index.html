@@ -166,6 +166,18 @@ td.del button:hover{color:var(--bad)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal .box{background:var(--surface);border-radius:10px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
 .modal textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px;font-size:12.5px}
+
+/* 流程圖 */
+.fc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr) auto);grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr);gap:6px;align-items:stretch}
+.fc-step{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.fc-step>div{display:flex;flex-direction:column;gap:4px;align-items:flex-start;height:100%}
+.fc-step b{font-size:14.5px}
+.fc-step p{margin:0;color:var(--muted);flex:1}
+.fc-no{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+.fc-who{font-size:11.5px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:0 8px;font-weight:500}
+.fc-loop{font-size:12px;color:var(--warn);font-weight:700}
+.fc-arrow{align-self:center;color:var(--accent);font-weight:700;text-align:center}
+@media (max-width:980px){.fc-list{grid-template-columns:minmax(0,1fr)}.fc-arrow{transform:rotate(90deg)}}
 .flash{animation:flash 1.6s ease-out}
 @keyframes flash{from{box-shadow:0 0 0 5px var(--accent-soft)}to{box-shadow:0 0 0 0 transparent}}
 
@@ -266,7 +278,7 @@ const EX = {
   quotes:{g:'期末審查｜老師 B｜「中段節奏太慢，我一度不知道角色在等什麼。」｜負面', x:'大家都說很好看。', why:'好的寫法有誰說、在哪裡、原話；負面回饋一樣要寫，第六章會用到。'}
 };
 const CHAPTERS = [
-{ id:'c0', no:'〇', title:'基本資料', type:'basic', intro:'封面和每一章的提示詞都會用到這裡的資料。', groups:[
+{ id:'c0', no:'〇', title:'基本資料', type:'basic', intro:'先看整體流程，再填基本資料。封面和每一章的提示詞都會用到這裡的資料。', groups:[
   { title:'專題資訊', fields:[
     {id:'title', label:'專題名稱', kind:'text', req:1, ph:'例：梅莉物語'},
     {id:'group', label:'組別', kind:'select', opts:Object.keys(GROUPS), req:1},
@@ -423,9 +435,9 @@ const SAMPLE = { isSample:true, values:{
 /* ===================== 4. 狀態與儲存 ===================== */
 const KEY = 'report-guide-v2';
 let state, cur = 'c0';
-const blank = () => ({ v:2, isSample:false, values:{ group:'遊戲組', sub:'2D 遊戲' }, srcs:[], raw:{}, body:{}, bodySig:{}, ups:{}, final:{}, read:{}, pre:{}, log:[], abs:'' });
+const blank = () => ({ v:2, isSample:false, values:{ group:'遊戲組', sub:'2D 遊戲' }, srcs:[], raw:{}, body:{}, bodySig:{}, ups:{}, final:{}, read:{}, pre:{}, log:[], abs:'', nlm:{} });
 const clone = o => JSON.parse(JSON.stringify(o));
-function fix(){ state = Object.assign(blank(), state); ['srcs','log'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; }); ['raw','body','bodySig','ups','final','read','pre','values'].forEach(k => { state[k] = state[k] || {}; }); }
+function fix(){ state = Object.assign(blank(), state); ['srcs','log'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; }); ['raw','body','bodySig','ups','final','read','pre','values','nlm'].forEach(k => { state[k] = state[k] || {}; }); }
 function load(){
   try { const s = localStorage.getItem(KEY); if (s) state = JSON.parse(s); } catch(e){}
   if (!state) state = blank();
@@ -921,19 +933,87 @@ function renderMain(){
   let h = '<div class="ch-head"><span class="eyebrow">' + (c.type === 'basic' ? '開始之前' : c.type === 'pos' ? '寫報告之前' : '第' + c.no + '章') + '</span><h2>' + c.title + '</h2><p>' + esc(c.intro) + '</p>' +
     (c.words ? '<div><span class="pill">建議 ' + c.words[0] + '～' + c.words[1] + ' 字</span></div>' : '') + '</div>';
   if (c.type !== 'basic') h += '<div id="stripBox">' + stripHTML(c) + '</div>';
+  if (c.type === 'basic') h += flowchartHTML();
   h += c.groups.map(g => { const inner = g.fields.map(fieldHTML).join(''); return inner ? '<section class="group"><h3>' + esc(g.title) + (g.sub ? '<small>' + esc(g.sub) + '</small>' : '') + '<span class="mine">✎ 我的內容</span></h3>' + inner + '</section>' : ''; }).join('');
   if (c.type === 'basic'){
-    h += '<section class="group"><h3>怎麼用這個工具</h3><ol class="hint" style="max-width:none;padding-left:20px;margin:0">' +
-      '<li>先填這頁的基本資料，再到「專題定位」用 5 句話說清楚你的專題。</li>' +
-      '<li>每一章都一樣：填欄位 → 按「複製提示詞」貼到 ChatGPT 或 Gemini → 把 AI 最後給的結果貼回來 → 讀過、修改後定稿。</li>' +
-      '<li>「✎ 我的內容」是你自己寫的資料，可以隨時修改；「AI 建議」是唯讀的參考，按「套用」才會寫入。</li>' +
+    h += nlmHTML();
+    h += '<section class="group"><h3>使用前要知道的事</h3><ul class="hint" style="max-width:none;padding-left:20px;margin:0">' +
+      '<li>「✎ 我的內容」是你自己的資料，可以隨時修改；「AI 建議」是唯讀的參考，按「套用」才會寫入。</li>' +
       '<li>參考資料統一放在「我參考的資料」，AI 只能引用那裡的資料。</li>' +
-      '<li>全部完成後，到「報告預覽」複製全文，貼到系上的 Word 範本，再換上圖片。</li>' +
-      '<li>資料存在這台電腦的瀏覽器。換電腦或備份，請用右上角的「匯出／匯入」。</li></ol>' +
-      '<p class="hint" style="max-width:none">AI 寫的是草稿，每一句都要自己讀過、改過。每次複製提示詞，工具都會自動記錄，可以放進附錄的 AI 使用紀錄。</p>' +
+      '<li>AI 寫的是草稿，每一句都要自己讀過、改過。每次複製提示詞，工具都會自動記錄，可以放進附錄的 AI 使用紀錄。</li>' +
+      '<li>資料存在這台電腦的瀏覽器。換電腦或備份，請用右上角的「匯出／匯入」。</li></ul>' +
       (gate(c).miss.length ? '' : '<div class="next"><div><b>下一步：專題定位</b><p>用 5 句話把專題說清楚。</p></div><button class="btn pri" data-nav="pos">前往專題定位</button></div>') + '</section>';
   } else h += stepCard(c);
   $('#main').innerHTML = h;
+}
+
+
+/* ===================== 12b. 流程圖與 NotebookLM 彙整 ===================== */
+const FLOW = [
+  { t:'彙整舊資料', who:'NotebookLM', d:'把歷次提案報告書、企劃書、簡報上傳到 NotebookLM，貼上本工具的「彙整提示詞」，整理出初步內容。', btn:['看彙整提示詞','data-jump="nlm"'] },
+  { t:'填入欄位', who:'本工具', d:'把 NotebookLM 的結果貼回本工具，一次分配到各章欄位；再自己補充、修改。', btn:['前往專題定位','data-nav="pos"'] },
+  { t:'AI 反問與思考', who:'ChatGPT／Gemini', d:'每一章按「複製提示詞」，貼到 ChatGPT 或 Gemini。AI 會一題一題問你，幫你把內容想清楚，最後寫出本章正文。', btn:['前往第一章','data-nav="c1"'] },
+  { t:'回填與定稿', who:'本工具', d:'把 AI 的結果貼回本工具：確定的內容「套用」回欄位，正文讀過、改過後定稿。', loop:'下一章重複 ③ ④' },
+  { t:'下載 Word', who:'本工具', d:'不論完成多少，都可以在「報告預覽」下載系上範本格式的 Word 檔；沒寫完的章節會標示出來。', btn:['前往報告預覽','data-nav="pv"'] }
+];
+function flowchartHTML(){
+  const step = (f, i) => '<li class="fc-step"><span class="fc-no">' + (i + 1) + '</span><div><b>' + f.t + '</b><span class="fc-who">' + f.who + '</span><p>' + f.d + '</p>' +
+    (f.loop ? '<span class="fc-loop">↺ ' + f.loop + '</span>' : '') + (f.btn ? '<button class="btn sm" ' + f.btn[1] + '>' + f.btn[0] + '</button>' : '') + '</div></li>';
+  return '<section class="group fc"><h3>整體流程<small>先看一遍，再開始填寫</small></h3><ol class="fc-list">' + FLOW.map(step).join('<li class="fc-arrow" aria-hidden="true">→</li>') + '</ol>' +
+    '<p class="hint" style="max-width:none">NotebookLM 只負責「整理你們已經寫過的東西」；ChatGPT 或 Gemini 負責「反問你、幫你想清楚」。兩者都不能替你編造內容。</p></section>';
+}
+// NotebookLM 可以整理的欄位（依目前組別顯示欄位名稱）
+const NLM_IDS = ['title','tools','members','p_what','p_who','p_feel','p_diff','p_done','origin','evid','gap','purpose','works','theme','elems','units','core','scope','schedule','flow','problems','aidecl','spec','quotes'];
+const NLM_HINT = { origin:'為什麼想做這個題目（具體的經驗或事件）', evid:'來源中提到的新聞、統計或調查：寫出資料名稱、出處和它說了什麼', gap:'來源中提到的同類作品，以及它們哪裡不夠', purpose:'來源中寫的專題目的', scope:'做什麼、不做什麼、為什麼不做', spec:'作品目前的規格（片長、關卡數、張數、集數）', p_diff:'和同類作品哪裡不一樣（寫出作品名稱）' };
+function nlmPrompt(){
+  const byCh = CHAPTERS.map(c => { const fs = NLM_IDS.map(F).filter(f => f.ch === c.id); return fs.length ? '（' + chName(c) + '）\n' + fs.map(f => '【' + shortName(f) + '】：' + (f.kind === 'table' ? '每列一行，各欄以｜分隔，依序為：' + f.cols.map(x => x.n).join('｜') : (NLM_HINT[f.id] || (L(f.hint) || '').split('。')[0]))).join('\n') : ''; }).filter(Boolean).join('\n\n');
+  return [
+'你是幫我整理畢業專題資料的助理。請「只根據我上傳的來源」（歷次提案報告書、企劃書、簡報、會議紀錄），把內容整理成下面的欄位。',
+'',
+'# 規則',
+'1. 只能使用來源裡寫到的內容，不要推測、補寫或美化。來源沒有提到的欄位，內容寫〔待補〕。',
+'2. 每個欄位一段，開頭固定寫「【欄位名稱】：」，欄位名稱一字不改。',
+'3. 不要加引用編號、不要用粗體或標題符號。',
+'4. 如果不同次的提案寫法不一樣，以最新一次為準，並在內容最後加註「（舊版寫法：…）」。',
+'5. 全部放在一個程式碼區塊裡，第一行寫 ===欄位更新===，最後一行寫 ===END===。',
+'',
+'# 我們的專題',
+'組別：' + (val('group') || '') + '（' + (val('sub') || '') + '）',
+'',
+'# 要整理的欄位',
+byCh
+  ].join('\n');
+}
+function parseNlm(text){
+  const pool = NLM_IDS.map(F);
+  const t = String(text || '').replace(/\r/g, '').replace(/\*\*/g, '').replace(/^\s*```[^\n]*$/gm, '').replace(/===[^=\n]+===/g, '');
+  const ups = []; let curU = null;
+  t.split('\n').forEach(line => {
+    const m = line.match(/^\s*[-・•*]?\s*【([^】]+)】\s*[：:]\s*(.*)$/);
+    if (m){ curU = { name:m[1].trim(), text:m[2] }; ups.push(curU); } else if (curU) curU.text += '\n' + line;
+  });
+  return ups.map(u => {
+    const n = norm(u.name), f = pool.find(f => norm(label(f)) === n) || pool.find(f => { const l = norm(label(f)); return n.length >= 2 && (l.includes(n) || n.includes(l)); });
+    const text = u.text.replace(/\s*\[\d+(?:[,，、\s]*\d+)*\]/g, '').replace(/^\n+|\s+$/g, '');
+    return { name:u.name, id:f ? f.id : null, text, st:'pending' };
+  }).filter(u => u.text && !/^〔待補〕?$/.test(u.text.trim()));
+}
+function nlmHTML(){
+  const ups = state.nlm.ups || [], pend = ups.filter(u => u.st === 'pending' && u.id);
+  const empty = pend.filter(u => !filled(F(u.id))).length;
+  const list = ups.length ? '<div class="ups"><p class="ro">NotebookLM 整理的內容（唯讀：按「套用」才會寫入欄位；已經有內容的欄位，套用會取代原本的內容）</p>' + ups.map((u, i) => {
+    const f = u.id ? F(u.id) : null, has = f && filled(f);
+    const hd = '<div class="hd"><b>' + esc(f ? chName(chap(f.ch)) + '｜' + shortName(f) : u.name) + '</b>' + (!f ? '<span class="pill w">找不到對應欄位，請手動處理</span>' : u.st === 'applied' ? '<span class="pill">✓ 已套用</span><button class="btn sm" data-nav="' + f.ch + '">前往該章</button>' : u.st === 'skipped' ? '<span class="pill w">已略過</span><button class="btn sm" data-nup="' + i + '" data-op="pending">復原</button>' :
+      (has ? '<span class="pill w">欄位已有內容</span>' : '') + '<button class="btn sm pri" data-nup="' + i + '" data-op="applied">' + (has ? '取代並套用' : '套用') + '</button><button class="btn sm" data-nup="' + i + '" data-op="skipped">略過</button>') + '</div>';
+    return '<div class="up ' + (u.st || '') + '">' + hd + '<div class="tx">' + esc(u.text) + '</div></div>';
+  }).join('') + (empty ? '<div><button class="btn sm" data-nupall="1">全部套用（只填入還空著的欄位，共 ' + empty + ' 項）</button></div>' : '') + '</div>' : '';
+  return '<section class="stepcard" id="w-nlm"><h3>流程 ①② 用 NotebookLM 彙整歷次提案<small style="font-family:var(--f-body);font-size:12.5px;font-weight:400;color:var(--muted);margin-left:8px">選用，但很省時間</small></h3>' +
+    '<div class="step"><span class="n">1</span><div><h4>上傳資料到 NotebookLM</h4><p class="hint">到 NotebookLM 建立一個筆記本，把歷次的提案報告書、企劃書、簡報（PDF、Word、Google 簡報都可以）都加入來源。<b>請先選好上面的組別和子類型</b>，欄位名稱會跟著改變。</p>' +
+    '<div class="top-actions"><button class="btn pri" data-copynlm="1">複製 NotebookLM 彙整提示詞</button><span class="links"><a href="https://notebooklm.google.com/" target="_blank" rel="noopener">開啟 NotebookLM ↗</a></span><span class="toast" id="tst-nlm"></span></div>' +
+    '<button class="btn sm" data-togglenlm="1" style="align-self:flex-start">' + (showPrompt.nlm ? '收起提示詞' : '預覽提示詞（不用看也可以）') + '</button>' + (showPrompt.nlm ? '<pre class="pre">' + esc(nlmPrompt()) + '</pre>' : '') + '</div></div>' +
+    '<div class="step' + (ups.length ? ' done' : '') + '"><span class="n">2</span><div><h4>把 NotebookLM 的回答貼回這裡</h4><p class="hint">在 NotebookLM 回答的右下角按「複製」，貼到下面的框，再按「讀取」。工具會把內容分配到各章的欄位。</p>' +
+    '<textarea data-nlmraw="1" rows="5" placeholder="===欄位更新===&#10;【我們做的是什麼】：…">' + esc(state.nlm.raw || '') + '</textarea>' +
+    '<div class="top-actions"><button class="btn pri" data-parsenlm="1">讀取</button><span class="toast" id="pmsg-nlm"></span></div>' + list + '</div></div></section>';
 }
 
 /* ===================== 13. 畫面：我參考的資料 ===================== */
@@ -1170,6 +1250,7 @@ document.addEventListener('input', e => {
   if (d.raw){ state.raw[d.raw] = el.value; save(); return; }
   if (d.body){ state.body[d.body] = el.value; save(); const n = $('#wc-' + d.body); if (n) n.textContent = '約 ' + el.value.replace(/\s/g, '').length + ' 字'; return; }
   if (d.abs){ state.abs = el.value; save(); return; }
+  if (d.nlmraw){ state.nlm.raw = el.value; save(); return; }
   if (d.src !== undefined){ state.srcs[+d.src][d.k] = el.value; save(); const ce = $('#cite-' + d.src); if (ce) ce.innerHTML = '<b>自動產生的參考文獻：</b>' + esc(citeOf(state.srcs[+d.src])); renderNav(); return; }
   if (d.ans !== undefined && d.k){ const a = state.values.answers = state.values.answers || []; a[+d.ans] = a[+d.ans] || {}; a[+d.ans][d.k] = el.value; save(); refreshLight(); return; }
   if (d.f && d.r !== undefined){ state.values[d.f][+d.r][+d.c] = el.value; }
@@ -1204,6 +1285,11 @@ document.addEventListener('click', e => {
   if (d.del){ const a = state.values[d.del]; a.splice(+d.r, 1); if (!a.length) a.push([]); save(); rerenderKeepFocus(); return; }
   if (d.toggle){ showPrompt[d.toggle] = !showPrompt[d.toggle]; rerenderKeepFocus(); return; }
   if (d.copy){ const c = chap(d.copy); if (gate(c).miss.length) return; logUse(chName(c), c.type === 'pos' ? '專題定位問答' : c.type === 'grill' ? '問答＋撰寫正文' : '撰寫正文'); copyText(promptFor(c), $('#tst-' + c.id), '已複製，貼到 ChatGPT 或 Gemini'); return; }
+  if (d.copynlm){ logUse('基本資料', 'NotebookLM 彙整歷次提案'); copyText(nlmPrompt(), $('#tst-nlm'), '已複製，貼到 NotebookLM 的對話框'); return; }
+  if (d.togglenlm){ showPrompt.nlm = !showPrompt.nlm; rerenderKeepFocus(); return; }
+  if (d.parsenlm){ const ups = parseNlm(state.nlm.raw); state.nlm.ups = ups; save(); renderAll(); const m = $('#pmsg-nlm'); if (m) m.textContent = ups.length ? '讀到 ' + ups.length + ' 個欄位，請逐項套用或略過。' : '沒有讀到內容，請確認貼的是 NotebookLM 的回答（每段以【欄位名稱】：開頭）。'; jumpTo('nlm'); return; }
+  if (d.nup !== undefined){ const u = state.nlm.ups[+d.nup]; if (d.op === 'applied') applyUpdate(u); u.st = d.op; save(); rerenderKeepFocus(); return; }
+  if (d.nupall){ state.nlm.ups.forEach(u => { if (u.st === 'pending' && u.id && !filled(F(u.id))){ applyUpdate(u); u.st = 'applied'; } }); save(); rerenderKeepFocus(); return; }
   if (d.copyvis){ logUse('第四章 專題製作說明', '視覺規範書擷取'); copyText(visPrompt(), $('#tst-vis'), '已複製'); return; }
   if (d.parse){
     const c = chap(d.parse), raw = state.raw[c.id] || '', msg = $('#pmsg-' + c.id);
